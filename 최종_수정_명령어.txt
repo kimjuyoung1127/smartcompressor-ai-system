@@ -1,0 +1,18 @@
+# 프로덕션 서버에서 즉시 실행할 명령어
+
+# 1. 최신 코드 받기
+cd ~/smartcompressor-ai-system
+git pull origin main
+
+# 2. 프로세스 시작 (Python 프로세스는 비활성화됨)
+pm2 start ecosystem.config.js
+
+# 3. 설정 저장
+pm2 save
+
+# 4. 상태 확인
+pm2 status
+
+# 5. 로그 확인
+pm2 logs signalcraft-nodejs --lines 30
+

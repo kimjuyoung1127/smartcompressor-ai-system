@@ -42,3 +42,5 @@ class PowerChart {
         }
     }
 }
+
+export { PowerChart };

@@ -41,3 +41,5 @@ class VibrationChart {
         }
     }
 }
+
+export { VibrationChart };

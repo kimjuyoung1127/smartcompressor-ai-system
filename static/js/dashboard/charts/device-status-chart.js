@@ -43,3 +43,5 @@ class DeviceStatusChart {
         }
     }
 }
+
+export { DeviceStatusChart };

@@ -55,3 +55,5 @@ class EnergyChart {
         }
     }
 }
+
+export { EnergyChart };
