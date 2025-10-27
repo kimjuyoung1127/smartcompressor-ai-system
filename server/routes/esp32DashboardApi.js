@@ -17,6 +17,86 @@ if (!fs.existsSync(featuresDir)) {
     fs.mkdirSync(featuresDir, { recursive: true });
 }
 
+// 전체 데이터 조회 (모든 파일 읽기)
+router.get('/features/all', (req, res) => {
+    console.log(`[API] /features/all 호출됨`);
+    
+    try {
+        const deviceId = req.query.device_id;
+        
+        console.log(`[DEBUG] 전체 데이터 요청 - deviceId: ${deviceId}`);
+        
+        // 디렉토리 존재 확인
+        if (!fs.existsSync(featuresDir)) {
+            console.log(`[DEBUG] 디렉토리가 존재하지 않음: ${featuresDir}`);
+            return res.json({
+                success: true,
+                data: [],
+                count: 0,
+                total: 0
+            });
+        }
+        
+        // 모든 JSON 파일 읽기
+        const allFiles = fs.readdirSync(featuresDir)
+            .filter(file => file.endsWith('.json') && !file.startsWith('test_'));
+        
+        console.log(`[DEBUG] 전체 파일 개수: ${allFiles.length}`);
+        
+        let allData = [];
+        
+        // 모든 파일 읽기
+        allFiles.forEach(file => {
+            try {
+                const filePath = path.join(featuresDir, file);
+                const fileContent = fs.readFileSync(filePath, 'utf8');
+                const data = JSON.parse(fileContent);
+                
+                if (Array.isArray(data)) {
+                    allData = allData.concat(data);
+                } else {
+                    allData.push(data);
+                }
+            } catch (error) {
+                console.error(`파일 읽기 오류 ${file}:`, error.message);
+            }
+        });
+        
+        console.log(`[DEBUG] 전체 데이터 개수: ${allData.length}`);
+        
+        // 디바이스 ID 필터링
+        if (deviceId) {
+            allData = allData.filter(item => item.device_id === deviceId);
+            console.log(`[DEBUG] 디바이스 필터링 후: ${allData.length}`);
+        }
+        
+        // 타임스탬프 기준 정렬 (최신순)
+        allData.sort((a, b) => b.timestamp - a.timestamp);
+        
+        // 45dB 기준으로 compressor_state 재계산
+        allData.forEach(item => {
+            if (item.decibel_level !== undefined) {
+                item.compressor_state = item.decibel_level >= 45 ? 1 : 0;
+            }
+        });
+        
+        res.json({
+            success: true,
+            data: allData,
+            count: allData.length,
+            total: allData.length
+        });
+        
+    } catch (error) {
+        console.error('전체 데이터 조회 오류:', error);
+        res.status(500).json({
+            success: false,
+            message: '전체 데이터 조회 실패',
+            error: error.message
+        });
+    }
+});
+
 // 최근 특징 데이터 조회
 router.get('/features/recent', (req, res) => {
     console.log(`[TEST] features/recent API 호출됨!`);
