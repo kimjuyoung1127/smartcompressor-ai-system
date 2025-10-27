@@ -79,9 +79,23 @@ app.get('/static/js/enhanced-registration.js', [verifySession, ensureAdmin], (re
 
 
 // 정적 파일 서빙
-app.use('/static', express.static(path.join(__dirname, '../static')));
-app.use(express.static(path.join(__dirname, '../static')));
-app.use('/static/dashboard-components', express.static(path.join(__dirname, '../static/dashboard-components')));
+// 정적 파일 서빙 - /static 경로에 대해
+app.use('/static', express.static(path.join(__dirname, '../static'), {
+    maxAge: '1h',
+    etag: true
+}));
+
+// 정적 파일 서빙 - 루트 경로에 대해 (추가)
+app.use(express.static(path.join(__dirname, '../static'), {
+    maxAge: '1h',
+    etag: true
+}));
+
+// dashboard-components 서빙
+app.use('/static/dashboard-components', express.static(path.join(__dirname, '../static/dashboard-components'), {
+    maxAge: '1h',
+    etag: true
+}));
 
 // 메인 페이지 (쇼윈도 - 로그인 화면)
 app.get('/', (req, res) => {
