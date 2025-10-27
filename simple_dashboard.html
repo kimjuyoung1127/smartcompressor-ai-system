@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 센서 모니터링</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .status-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .status-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+        .status-label {
+            color: #666;
+            margin-top: 5px;
+        }
+        .data-table {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background: #f8f9fa;
+            font-weight: bold;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧊 ESP32 센서 모니터링</h1>
+            <p>실시간 압축기 상태 및 센서 데이터 분석</p>
+            <button class="btn" onclick="loadData()">🔄 새로고침</button>
+            <button class="btn" onclick="startAutoRefresh()">▶️ 자동 새로고침</button>
+            <button class="btn" onclick="stopAutoRefresh()">⏸️ 중지</button>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-item">
+                <div class="status-value" id="deviceCount">0</div>
+                <div class="status-label">활성 디바이스</div>
+            </div>
+            <div class="status-item">
+                <div class="status-value" id="dataCount">0</div>
+                <div class="status-label">총 데이터 수</div>
+            </div>
+            <div class="status-item">
+                <div class="status-value" id="lastUpdate">--:--</div>
+                <div class="status-label">마지막 업데이트</div>
+            </div>
+            <div class="status-item">
+                <div class="status-value" id="connectionStatus">연결 중...</div>
+                <div class="status-label">연결 상태</div>
+            </div>
+        </div>
+
+        <div class="data-table">
+            <h3>📋 최근 센서 데이터</h3>
+            <div id="recentData">
+                <div class="loading">데이터 로딩 중...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let autoRefreshInterval = null;
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('페이지 로드 완료');
+            loadData();
+            startAutoRefresh();
+        });
+
+        // 데이터 로드
+        async function loadData() {
+            try {
+                console.log('데이터 로드 시작');
+                updateConnectionStatus('warning', '연결 중...');
+                
+                // 디바이스 목록 조회
+                const devicesResponse = await fetch('/api/esp32/devices');
+                const devicesData = await devicesResponse.json();
+                
+                if (devicesData.success) {
+                    document.getElementById('deviceCount').textContent = devicesData.total_devices;
+                }
+                
+                // 최근 데이터 조회
+                const dataResponse = await fetch('/api/esp32/features/recent?limit=20');
+                const data = await dataResponse.json();
+                
+                if (data.success) {
+                    document.getElementById('dataCount').textContent = data.total;
+                    displayData(data.data);
+                    updateConnectionStatus('success', '연결됨');
+                    document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+                } else {
+                    throw new Error(data.message || '데이터 조회 실패');
+                }
+                
+            } catch (error) {
+                console.error('데이터 로드 실패:', error);
+                updateConnectionStatus('error', '연결 실패');
+                document.getElementById('recentData').innerHTML = 
+                    '<div class="loading">데이터 로드 실패: ' + error.message + '</div>';
+            }
+        }
+
+        // 데이터 표시
+        function displayData(data) {
+            if (!data || data.length === 0) {
+                document.getElementById('recentData').innerHTML = 
+                    '<div class="loading">데이터가 없습니다.</div>';
+                return;
+            }
+
+            let html = '<table><tr><th>디바이스</th><th>시간</th><th>RMS</th><th>데시벨</th><th>압축기</th><th>이상점수</th></tr>';
+            
+            data.forEach(item => {
+                const time = new Date(item.timestamp).toLocaleString();
+                const compressor = item.compressor_state > 0.5 ? 'ON' : 'OFF';
+                const compressorClass = item.compressor_state > 0.5 ? 'style="color: green; font-weight: bold;"' : 'style="color: red;"';
+                
+                html += `
+                    <tr>
+                        <td>${item.device_id || 'Unknown'}</td>
+                        <td>${time}</td>
+                        <td>${(item.rms_energy || 0).toFixed(2)}</td>
+                        <td>${(item.decibel_level || 0).toFixed(1)} dB</td>
+                        <td ${compressorClass}>${compressor}</td>
+                        <td>${(item.anomaly_score || 0).toFixed(3)}</td>
+                    </tr>
+                `;
+            });
+            
+            html += '</table>';
+            document.getElementById('recentData').innerHTML = html;
+        }
+
+        // 연결 상태 업데이트
+        function updateConnectionStatus(type, message) {
+            const element = document.getElementById('connectionStatus');
+            element.textContent = message;
+            element.style.color = type === 'success' ? 'green' : type === 'error' ? 'red' : 'orange';
+        }
+
+        // 자동 새로고침 시작
+        function startAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+            autoRefreshInterval = setInterval(loadData, 5000); // 5초마다
+            console.log('자동 새로고침 시작');
+        }
+
+        // 자동 새로고침 중지
+        function stopAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+            }
+            console.log('자동 새로고침 중지');
+        }
+    </script>
+</body>
+</html>

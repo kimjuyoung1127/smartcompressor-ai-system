@@ -76,3 +76,5 @@ class DashboardApiClient {
         return response.json();
     }
 }
+
+export { DashboardApiClient };

@@ -1,5 +1,8 @@
 // static/js/dashboard/ui/card-updater.js
 class CardUpdater {
+    constructor() {
+        // 초기화
+    }
     updateOverviewCards(summary) {
         if (summary.overview) {
             const totalStoresEl = document.getElementById('totalStores');
@@ -14,3 +17,6 @@ class CardUpdater {
         }
     }
 }
+
+// Export for ES modules
+export { CardUpdater };

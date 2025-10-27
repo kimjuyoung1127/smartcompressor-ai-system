@@ -15,3 +15,5 @@ class ChartManager {
         this.charts.reports = new ReportsChart('reportsChart');
     }
 }
+
+export { ChartManager };

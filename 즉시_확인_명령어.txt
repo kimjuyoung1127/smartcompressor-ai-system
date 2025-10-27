@@ -1,0 +1,17 @@
+프로덕션 서버에서 실행해서 정확한 원인 파악:
+
+# 1. dashboard.html 파일 존재 확인
+ls -la templates/customer/dashboard.html
+
+# 2. server/app.js에서 /dashboard 라우트 확인
+grep -A 5 "app.get('/dashboard'" server/app.js
+
+# 3. 서버 로그 확인 (에러가 있는지)
+pm2 logs signalcraft-app --lines 50 --nostream
+
+# 4. 실제 테스트
+curl -v http://localhost:3000/dashboard
+
+# 5. Nginx 설정 확인
+sudo cat /etc/nginx/sites-available/* | grep -A 10 dashboard
+

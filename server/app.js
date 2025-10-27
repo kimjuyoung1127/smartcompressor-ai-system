@@ -201,6 +201,45 @@ app.get('/esp32-dashboard-modular', (req, res) => {
     res.sendFile(path.join(__dirname, '../static/pages/esp32_dashboard_modular.html'));
 });
 
+// Dashboard API Routes
+app.get('/api/dashboard/summary', async (req, res) => {
+    try {
+        // 대시보드 요약 데이터 생성
+        const summary = {
+            overview: {
+                total_stores: 10,
+                online_compressors: 15,
+                warning_alerts: 3,
+                total_energy_cost: 1250000
+            },
+            recent_alerts: [
+                {
+                    id: 1,
+                    message: '저온 경고 발생',
+                    priority: 'high',
+                    timestamp: new Date().toISOString()
+                }
+            ],
+            energy_data: {
+                today: 12500,
+                yesterday: 12000,
+                trend: 'up'
+            }
+        };
+
+        res.json({
+            success: true,
+            ...summary
+        });
+    } catch (error) {
+        console.error('Dashboard summary error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 // API 라우트
 app.use('/api/auth', authRoutes);
 app.use('/api/ai', aiRoutes);

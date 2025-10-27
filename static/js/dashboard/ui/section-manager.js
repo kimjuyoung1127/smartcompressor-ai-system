@@ -233,3 +233,5 @@ class SectionManager {
         });
     }
 }
+
+export { SectionManager };
