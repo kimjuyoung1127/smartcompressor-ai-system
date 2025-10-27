@@ -40,7 +40,11 @@ from services.firmware_ota_service import firmware_ota_service
 
 def create_app():
     """Flask 애플리케이션 팩토리"""
-    app = Flask(__name__)
+    # 정적 파일 경로 설정
+    app = Flask(__name__, 
+                static_folder='static',
+                static_url_path='/static',
+                template_folder='templates')
     app.secret_key = os.environ.get("FLASK_SECRET_KEY", "signalcraft_secret_key_2024_very_secure_12345")
     app.register_blueprint(kakao_auth_bp)
     # 업로드 폴더 설정
