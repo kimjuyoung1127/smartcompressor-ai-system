@@ -25,6 +25,7 @@ from routes.iot_sensor_routes import iot_sensor_bp
 from routes.dashboard_routes import dashboard_bp
 from routes.mobile_app_routes import mobile_app_bp
 from routes.analytics_routes import analytics_bp
+from routes.customer_routes import customer_bp
 from admin.routes.admin_routes import admin_bp
 from models.database import init_db
 
@@ -109,47 +110,49 @@ def create_app():
     app.register_blueprint(mobile_app_bp)
     # 분석 시스템 라우트 등록 # NEW
     app.register_blueprint(analytics_bp)
+    # 커스터머 라우트 등록
+    app.register_blueprint(customer_bp)
 
     # 정적 파일 서빙을 위한 라우트 추가 (dashboard-components)
     @app.route('/static/dashboard-components/<path:filename>')
     def serve_dashboard_components(filename):
         return send_from_directory(os.path.join(app.root_path, 'static', 'dashboard-components'), filename)
     
-    # IoT 센서 서비스 초기화
-sensor_monitoring_service.start_monitoring()
-    
     # API 라우트 추가 (프론트엔드 호환성)
-@app.route('/api/auth/login', methods=['POST'])
-def api_login():
-    from routes.auth_routes import login
-    return login()
+    @app.route('/api/auth/login', methods=['POST'])
+    def api_login():
+        from routes.auth_routes import login
+        return login()
     
-@app.route('/api/auth/register', methods=['POST'])
-def api_register():
-    from routes.auth_routes import register
-    return register()
+    @app.route('/api/auth/register', methods=['POST'])
+    def api_register():
+        from routes.auth_routes import register
+        return register()
     
-@app.route('/api/auth/logout', methods=['POST'])
-def api_logout():
-    from routes.auth_routes import logout
-    return logout()
+    @app.route('/api/auth/logout', methods=['POST'])
+    def api_logout():
+        from routes.auth_routes import logout
+        return logout()
     
-@app.route('/api/auth/verify', methods=['GET'])
-def api_verify():
-    from routes.auth_routes import auth_status
-    return auth_status()
+    @app.route('/api/auth/verify', methods=['GET'])
+    def api_verify():
+        from routes.auth_routes import auth_status
+        return auth_status()
     
-customer-dashboard
-@app.route('/api/lightweight-analyze', methods=['POST'])
-def api_lightweight_analyze():
-    from routes.ai_routes import lightweight_analyze
-    return lightweight_analyze()
+    @app.route('/api/lightweight-analyze', methods=['POST'])
+    def api_lightweight_analyze():
+        from routes.ai_routes import lightweight_analyze
+        return lightweight_analyze()
 
-@app.route('/dashboard')
-def dashboard():
-    """대시보드 페이지"""
-    from flask import render_template
-    return render_template('dashboard.html')
+    # 대시보드 라우트
+    @app.route('/dashboard')
+    def dashboard():
+        """메인 대시보드 페이지"""
+        from flask import session, redirect, render_template
+        # 로그인 체크
+        if not session.get('user_id'):
+            return redirect('/login')
+        return render_template('customer/dashboard.html')
 
     @app.route('/mobile_app')
     def mobile_app():
@@ -163,12 +166,6 @@ def dashboard():
         from flask import render_template
         return render_template('notification_dashboard.html')
 
-    @app.route('/dashboard')
-    def dashboard():
-        """메인 대시보드 페이지"""
-        from flask import render_template
-        return render_template('customer/refactored-dashboard.html')
-
     @app.route('/original-dashboard')
     def original_dashboard():
         """원래 대시보드 페이지"""
@@ -181,24 +178,18 @@ def dashboard():
         from flask import render_template
         return render_template('customer/mobile_friendly_dashboard.html')
 
-    @app.route('/admin')
-    def admin_dashboard():
-        """관리자 대시보드 페이지"""
-        from flask import render_template
-        return render_template('admin_dashboard.html')
+    # after_request 등록
+    @app.after_request
+    def after_request(response):
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        return response
 
-@app.after_request
-def after_request(response):
-    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-    response.headers["Pragma"] = "no-cache"
-    response.headers["Expires"] = "0"
-    return response
-
-@app.route('/admin')
-def admin_dashboard():
-    """관리자 대시보드 페이지"""
-    from flask import render_template
-    return render_template('admin_dashboard.html')
+    # IoT 센서 서비스 초기화
+    sensor_monitoring_service.start_monitoring()
+    
+    return app
 
 if __name__ == '__main__':
     import os
