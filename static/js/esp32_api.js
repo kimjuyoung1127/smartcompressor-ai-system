@@ -9,7 +9,8 @@ const API_CONFIG = {
 
 // API 호출 함수
 async function apiCall(endpoint, options = {}) {
-    const url = `${API_CONFIG.baseUrl}${endpoint}`;
+    // endpoint에 이미 /api/esp32가 포함되어 있으면 baseUrl을 붙이지 않음
+    const url = endpoint.startsWith('/api') ? endpoint : `${API_CONFIG.baseUrl}${endpoint}`;
     const config = {
         method: 'GET',
         headers: {
