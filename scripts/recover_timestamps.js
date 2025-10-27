@@ -50,17 +50,28 @@ files.forEach((file, index) => {
                 const date = new Date(item.timestamp);
                 const year = date.getFullYear();
                 
-                // 1970년대 데이터는 파일명의 timestamp로 복구
-                if (year >= 1970 && year < 1980 && fileTimestamp) {
-                    // received_at을 기준으로 올바른 timestamp 계산
-                    if (item.received_at) {
+                // 1970년대 데이터는 server_timestamp나 received_at으로 복구
+                if (year >= 1970 && year < 1980) {
+                    let correctTimestamp = null;
+                    
+                    // server_timestamp가 있으면 사용
+                    if (item.server_timestamp && typeof item.server_timestamp === 'number') {
+                        correctTimestamp = item.server_timestamp;
+                    }
+                    // received_at이 있으면 사용
+                    else if (item.received_at) {
                         const receivedDate = new Date(item.received_at);
-                        const correctTimestamp = receivedDate.getTime();
-                        
-                        if (correctTimestamp !== item.timestamp) {
-                            item.timestamp = correctTimestamp;
-                            modified = true;
-                        }
+                        correctTimestamp = receivedDate.getTime();
+                    }
+                    // 파일명의 timestamp 사용
+                    else if (fileTimestamp) {
+                        correctTimestamp = fileTimestamp;
+                    }
+                    
+                    if (correctTimestamp && correctTimestamp !== item.timestamp) {
+                        item.timestamp = correctTimestamp;
+                        modified = true;
+                        console.log(`  ✅ 복구: ${item.timestamp} -> ${correctTimestamp}`);
                     }
                 }
             }
