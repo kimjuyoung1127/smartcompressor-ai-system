@@ -162,11 +162,15 @@ app.get('/storage/dashboard', (req, res) => {
 
 
 // Customer Dashboard Route
-
 app.get('/dashboard', (req, res) => {
-
-    res.sendFile(path.join(__dirname, '../templates/customer/dashboard.html'));
-
+    const dashboardPath = path.join(__dirname, '../templates/customer/dashboard.html');
+    console.log('Dashboard requested, path:', dashboardPath);
+    res.sendFile(dashboardPath, (err) => {
+        if (err) {
+            console.error('Error sending dashboard:', err);
+            res.status(404).send('Dashboard file not found');
+        }
+    });
 });
 
 
