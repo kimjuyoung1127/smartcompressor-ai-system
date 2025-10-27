@@ -18,8 +18,8 @@ if (!fs.existsSync(featuresDir)) {
 }
 
 // 전체 데이터 조회 (모든 파일 읽기)
-router.get('/features/all', (req, res) => {
-    console.log(`[API] /features/all 호출됨`);
+router.get('/all', (req, res) => {
+    console.log(`[API] /api/esp32/all 호출됨`);
     
     try {
         const deviceId = req.query.device_id;
