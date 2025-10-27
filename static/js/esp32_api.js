@@ -60,12 +60,14 @@ async function apiCall(endpoint, options = {}) {
 // 최근 센서 데이터 조회
 async function fetchRecentData(limit = 100, hours = 24, deviceId = '') {
     try {
-        let endpoint = `/features/recent?limit=${limit}&hours=${hours}`;
+        let endpoint = `/api/esp32/features/recent?limit=${limit}&hours=${hours}`;
         if (deviceId) {
             endpoint += `&device_id=${encodeURIComponent(deviceId)}`;
         }
         
+        console.log('[API] 요청 URL:', endpoint);
         const data = await apiCall(endpoint);
+        console.log('[API] 응답 데이터:', data);
         
         if (!data.success) {
             throw new Error(data.message || '데이터 조회 실패');
@@ -82,7 +84,7 @@ async function fetchRecentData(limit = 100, hours = 24, deviceId = '') {
 // 디바이스 목록 조회
 async function fetchDevices() {
     try {
-        const data = await apiCall('/devices');
+        const data = await apiCall('/api/esp32/devices');
         
         if (!data.success) {
             throw new Error(data.message || '디바이스 목록 조회 실패');
@@ -99,7 +101,7 @@ async function fetchDevices() {
 // 통계 데이터 조회
 async function fetchStats() {
     try {
-        const data = await apiCall('/stats');
+        const data = await apiCall('/api/esp32/stats');
         
         if (!data.success) {
             throw new Error(data.message || '통계 조회 실패');
