@@ -201,6 +201,11 @@ app.get('/esp32-dashboard-modular', (req, res) => {
     res.sendFile(path.join(__dirname, '../static/pages/esp32_dashboard_modular.html'));
 });
 
+// ESP32 전체 데이터 조회 페이지
+app.get('/esp32-all-data', (req, res) => {
+    res.sendFile(path.join(__dirname, '../static/pages/esp32_all_data.html'));
+});
+
 // Dashboard API Routes
 app.get('/api/dashboard/summary', async (req, res) => {
     try {
