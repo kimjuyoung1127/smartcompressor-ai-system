@@ -54,24 +54,28 @@ files.forEach((file, index) => {
                 if (year >= 1970 && year < 1980) {
                     let correctTimestamp = null;
                     
-                    // server_timestamp가 있으면 사용
+                    // server_timestamp가 있으면 사용 (이게 가장 정확)
                     if (item.server_timestamp && typeof item.server_timestamp === 'number') {
+                        // server_timestamp는 밀리초 단위
                         correctTimestamp = item.server_timestamp;
+                        console.log(`  📊 server_timestamp 사용: ${item.server_timestamp}`);
                     }
                     // received_at이 있으면 사용
                     else if (item.received_at) {
                         const receivedDate = new Date(item.received_at);
                         correctTimestamp = receivedDate.getTime();
+                        console.log(`  📅 received_at 사용: ${item.received_at}`);
                     }
                     // 파일명의 timestamp 사용
                     else if (fileTimestamp) {
                         correctTimestamp = fileTimestamp;
+                        console.log(`  📁 파일명 timestamp 사용: ${fileTimestamp}`);
                     }
                     
                     if (correctTimestamp && correctTimestamp !== item.timestamp) {
+                        console.log(`  ✅ 복구: ${item.timestamp} -> ${correctTimestamp}`);
                         item.timestamp = correctTimestamp;
                         modified = true;
-                        console.log(`  ✅ 복구: ${item.timestamp} -> ${correctTimestamp}`);
                     }
                 }
             }
