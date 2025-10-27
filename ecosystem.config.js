@@ -34,35 +34,36 @@ module.exports = {
       max_log_size: '10M',
       retain_logs: 7
     },
-    {
-      name: 'signalcraft-python',
-      script: 'gunicorn',
-      args: '-c gunicorn.conf.py app:app',
-      interpreter: 'python3',
-      exec_mode: 'fork',
-      autorestart: true,
-      watch: false,
-      max_memory_restart: '1G',
-      env: {
-        FLASK_ENV: 'development',
-        PYTHONPATH: '.'
-      },
-      env_production: {
-        FLASK_ENV: 'production',
-        PYTHONPATH: '.'
-      },
-      // 로그 설정
-      log_type: 'json',
-      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
-      merge_logs: true,
-      error_file: './logs/python_error.log',
-      out_file: './logs/python_out.log',
-      log_file: './logs/python_combined.log',
-      time: true,
-      // 로그 로테이션
-      log_rotate: true,
-      max_log_size: '10M',
-      retain_logs: 7
-    }
+    // Python 프로세스는 비활성화 (대시보드는 Node.js로 서빙)
+    // {
+    //   name: 'signalcraft-python',
+    //   script: 'gunicorn',
+    //   args: '-c gunicorn.conf.py app:app',
+    //   interpreter: 'python3',
+    //   exec_mode: 'fork',
+    //   autorestart: true,
+    //   watch: false,
+    //   max_memory_restart: '1G',
+    //   env: {
+    //     FLASK_ENV: 'development',
+    //     PYTHONPATH: '.'
+    //   },
+    //   env_production: {
+    //     FLASK_ENV: 'production',
+    //     PYTHONPATH: '.'
+    //   },
+    //   // 로그 설정
+    //   log_type: 'json',
+    //   log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+    //   merge_logs: true,
+    //   error_file: './logs/python_error.log',
+    //   out_file: './logs/python_out.log',
+    //   log_file: './logs/python_combined.log',
+    //   time: true,
+    //   // 로그 로테이션
+    //   log_rotate: true,
+    //   max_log_size: '10M',
+    //   retain_logs: 7
+    // }
   ]
 };
