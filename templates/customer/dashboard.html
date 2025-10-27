@@ -657,8 +657,11 @@
             // Load the main dashboard by default
             loadMainDashboard();
             
-            // Refresh data every 30 seconds
-            setInterval(loadDashboardData, 30000);
+            // Load data immediately on page load
+            loadDashboardData();
+            
+            // Refresh data every 10 seconds (더 빠른 업데이트)
+            setInterval(loadDashboardData, 10000);
             
             // Additional check for mobile rendering
             window.addEventListener('resize', ensureChartVisibility);
