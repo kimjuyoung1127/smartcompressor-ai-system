@@ -17,6 +17,134 @@ if (!fs.existsSync(featuresDir)) {
     fs.mkdirSync(featuresDir, { recursive: true });
 }
 
+// 압축기 가동 분석 API
+router.get('/compressor-analysis', (req, res) => {
+    console.log(`[API] /api/esp32/compressor-analysis 호출됨`);
+    
+    try {
+        const deviceId = req.query.device_id;
+        const hours = parseInt(req.query.hours) || 24;
+        
+        // 디렉토리 존재 확인
+        if (!fs.existsSync(featuresDir)) {
+            return res.json({
+                success: true,
+                data: {
+                    total_samples: 0,
+                    compressor_on: 0,
+                    compressor_off: 0,
+                    on_percentage: 0,
+                    hourly_breakdown: []
+                }
+            });
+        }
+        
+        // 모든 JSON 파일 읽기
+        const allFiles = fs.readdirSync(featuresDir)
+            .filter(file => file.endsWith('.json') && !file.startsWith('test_'));
+        
+        let allData = [];
+        
+        allFiles.forEach(file => {
+            try {
+                const filePath = path.join(featuresDir, file);
+                const fileContent = fs.readFileSync(filePath, 'utf8');
+                const data = JSON.parse(fileContent);
+                
+                const dataArray = Array.isArray(data) ? data : [data];
+                
+                // 최근 N시간 데이터만 필터링
+                const cutoffTime = Date.now() - (hours * 60 * 60 * 1000);
+                dataArray.forEach(item => {
+                    if (item.timestamp >= cutoffTime) {
+                        allData.push(item);
+                    }
+                });
+            } catch (error) {
+                console.error(`파일 읽기 오류 ${file}:`, error.message);
+            }
+        });
+        
+        // 디바이스 ID 필터링
+        if (deviceId) {
+            allData = allData.filter(item => item.device_id === deviceId);
+        }
+        
+        // timestamp 기준 정렬
+        allData.sort((a, b) => a.timestamp - b.timestamp);
+        
+        // 압축기 상태 분석
+        let compressorOn = 0;
+        let compressorOff = 0;
+        const hourlyBreakdown = {};
+        
+        allData.forEach(item => {
+            // 45dB 기준으로 compressor_state 재계산
+            const state = item.decibel_level >= 45 ? 1 : 0;
+            
+            if (state === 1) {
+                compressorOn++;
+            } else {
+                compressorOff++;
+            }
+            
+            // 시간별 분석
+            const date = new Date(item.timestamp);
+            const hour = date.getHours();
+            
+            if (!hourlyBreakdown[hour]) {
+                hourlyBreakdown[hour] = { on: 0, off: 0 };
+            }
+            
+            if (state === 1) {
+                hourlyBreakdown[hour].on++;
+            } else {
+                hourlyBreakdown[hour].off++;
+            }
+        });
+        
+        const totalSamples = allData.length;
+        const onPercentage = totalSamples > 0 ? (compressorOn / totalSamples * 100).toFixed(1) : 0;
+        
+        // 시간별 분석 결과를 배열로 변환
+        const hourlyArray = Object.keys(hourlyBreakdown).map(hour => ({
+            hour: parseInt(hour),
+            compressor_on: hourlyBreakdown[hour].on,
+            compressor_off: hourlyBreakdown[hour].off,
+            on_percentage: hourlyBreakdown[hour].on + hourlyBreakdown[hour].off > 0 
+                ? (hourlyBreakdown[hour].on / (hourlyBreakdown[hour].on + hourlyBreakdown[hour].off) * 100).toFixed(1)
+                : 0
+        })).sort((a, b) => a.hour - b.hour);
+        
+        res.json({
+            success: true,
+            data: {
+                total_samples: totalSamples,
+                compressor_on: compressorOn,
+                compressor_off: compressorOff,
+                on_percentage: onPercentage,
+                hours_analyzed: hours,
+                hourly_breakdown: hourlyArray,
+                analysis: {
+                    is_excessive: parseFloat(onPercentage) > 60,
+                    is_frequent: compressorOn > totalSamples * 0.5,
+                    status: parseFloat(onPercentage) > 60 ? '과도한 가동' : 
+                           parseFloat(onPercentage) > 30 ? '빈번한 가동' : 
+                           '정상 가동'
+                }
+            }
+        });
+        
+    } catch (error) {
+        console.error('압축기 분석 오류:', error);
+        res.status(500).json({
+            success: false,
+            message: '압축기 분석 실패',
+            error: error.message
+        });
+    }
+});
+
 // 전체 데이터 조회 (모든 파일 읽기)
 router.get('/all', (req, res) => {
     console.log(`[API] ========== /api/esp32/all 호출됨 ==========`);
