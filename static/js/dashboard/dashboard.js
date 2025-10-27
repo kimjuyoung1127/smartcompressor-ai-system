@@ -1,8 +1,14 @@
 // static/js/dashboard/dashboard.js
 import { showAlert, startAutoRefreshHelper, stopAutoRefreshHelper, openModal, closeModal } 
-         from '../../common/utils/helpers.js';
+         from '/static/js/common/utils/helpers.js';
 import { getStatusClass, getStatusText, getPriorityClass, getHealthClass, formatDate } 
-         from '../../common/utils/formatters.js';
+         from '/static/js/common/utils/formatters.js';
+import { DashboardApiClient } from '/static/js/dashboard/data/api-client.js';
+import { DataLoader } from '/static/js/dashboard/data/data-loader.js';
+import { ChartManager } from '/static/js/dashboard/charts/chart-manager.js';
+import { TableRenderer } from '/static/js/dashboard/ui/table-renderer.js';
+import { SectionManager } from '/static/js/dashboard/ui/section-manager.js';
+import { CardUpdater } from '/static/js/dashboard/ui/card-updater.js';
 
 let chartManager;
 let dataLoader;
