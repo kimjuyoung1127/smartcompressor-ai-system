@@ -50,19 +50,10 @@ files.forEach((file, index) => {
                     const date = new Date(originalTimestamp);
                     newTimestamp = date.getTime();
                 }
-                // timestamp가 숫자지만 잘못된 형식인 경우 (예: 79514)
+                // timestamp가 숫자인 경우
                 else if (typeof originalTimestamp === 'number') {
-                    // timestamp가 너무 작은 경우 (예: 79514는 밀리초가 아님)
-                    if (originalTimestamp < 1000000000) {
-                        // 초 단위로 가정하여 밀리초로 변환
-                        newTimestamp = originalTimestamp * 1000;
-                    } else if (originalTimestamp < 1000000000000) {
-                        // 밀리초로 가정
-                        newTimestamp = originalTimestamp;
-                    } else {
-                        // 이미 올바른 형식 (예: 1761437340000)
-                        newTimestamp = originalTimestamp;
-                    }
+                    // 이미 밀리초 형식인 경우 그대로 사용
+                    newTimestamp = originalTimestamp;
                 }
                 
                 // timestamp가 변경된 경우
