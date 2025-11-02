@@ -1,412 +1,177 @@
-# 🎵 AI 오디오 진단 시스템
+# ⚙️ SignalCraft - 산업용 압축기 오디오 분석 시스템
 
-산업용 압축기의 오디오 신호를 분석하여 이상 상태를 진단하는 AI 시스템입니다. 듀얼 마이크 환경을 시뮬레이션하고, 노이즈 제거, 전문가 라벨링, CNN 모델 훈련, 실시간 진단까지 전체 파이프라인을 제공합니다.
+[![License](https://img.shields.io/badge/license-MIT-blue)](https://github.com/SEONBEOM-Kim/smartcompressor-ai-system/blob/main/LICENSE)
+[![Project Status](https://img.shields.io/badge/status-active-brightgreen)](https://github.com/SEONBEOM-Kim/smartcompressor-ai-system)
 
-## 📋 시스템 구성
+## 개요
 
-### 5개 핵심 Python 스크립트
+**SignalCraft**는 산업용 압축기의 **오디오 신호**를 분석해 **이상 징후, 고장, 유지보수 필요성**을 탐지하는 **AI 기반 시스템**입니다. 이 시스템은 엣지 컴퓨팅과 IoT 센서(ESP32), 머신러닝 모델, 그리고 실시간 모니터링과 분석을 위한 종합 대시보드를 결합합니다.
 
-1. **`data_collector.py`** - 데이터 수집 시뮬레이터
-2. **`preprocessor.py`** - 1차 정제 및 증류 모듈  
-3. **`labeling_tool.py`** - 전문가 라벨링 GUI
-4. **`train_ai.py`** - AI 훈련 스크립트
-5. **`run_diagnosis.py`** - 실시간 진단 스크립트
+## 🚀 기능
 
-## 🚀 빠른 시작
+- **실시간 오디오 모니터링**: 압축기 오디오 신호를 지속적으로 분석
+- **고급 이상 탐지**: 머신러닝 기반의 비정상 패턴 식별
+- **ESP32 연동**: 전용 센서 하드웨어를 통한 엣지 컴퓨팅
+- **종합 대시보드**: 운영자를 위한 시각적 모니터링 인터페이스
+- **전문가 지식 통합**: 엔지니어의 도메인 지식을 AI에 반영
+- **멀티 채널 지원**: 여러 압축기를 동시에 모니터링
+- **확장 가능한 아키텍처**: 여러 사이트와 설비로 확장 가능
 
-### 1. 환경 설정
-
-```bash
-# Python 가상환경 생성 및 활성화
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-
-# 의존성 설치
-pip install -r requirements.txt
-```
-
-### 2. 샘플 데이터 준비
-
-```bash
-# 샘플 오디오 파일 다운로드 (예시)
-wget https://example.com/target_audio.wav
-wget https://example.com/noise_audio.wav
-```
-
-### 3. 전체 파이프라인 실행
-
-```bash
-# 1단계: 데이터 수집
-python data_collector.py --target target_audio.wav --noise noise_audio.wav
-
-# 2단계: 전처리 및 스펙트로그램 생성
-python preprocessor.py --target data/raw/target_with_noise_*.wav --noise data/raw/noise_only_*.wav
-
-# 3단계: 전문가 라벨링 (웹 GUI)
-streamlit run labeling_tool.py
-
-# 4단계: AI 모델 훈련
-python train_ai.py --data-dir labeled_data
-
-# 5단계: 실시간 진단
-python run_diagnosis.py --target new_target.wav --noise new_noise.wav
-```
-
-## 📁 디렉토리 구조
+## 🏗️ 프로젝트 구조
 
 ```
-smartcompressor-ai-system/
-├── data_collector.py          # 데이터 수집 시뮬레이터
-├── preprocessor.py            # 전처리 모듈
-├── labeling_tool.py           # 라벨링 GUI
-├── train_ai.py               # AI 훈련
-├── run_diagnosis.py          # 실시간 진단
-├── requirements.txt          # Python 의존성
-├── README.md                 # 이 파일
-├── data/                     # 데이터 디렉토리
-│   ├── raw/                  # 원시 오디오 데이터
-│   ├── processed/            # 정제된 오디오
-│   └── spectrograms/         # 스펙트로그램 이미지
-├── labeled_data/             # 라벨링된 데이터
-│   ├── normal/               # 정상 가동음
-│   ├── leak/                 # 냉기 누설 신호
-│   └── overload/             # 과부하 신호
-├── models/                   # 훈련된 AI 모델
-├── results/                  # 훈련 결과
-└── diagnosis_results/        # 진단 결과
+signalcraft/
+├── .git/                       # Git 버전 제어 메타데이터
+├── .github/                    # GitHub 설정 및 워크플로
+│   └── workflows/              # CI/CD 파이프라인 (auto-deploy.yml, deploy.yml 등)
+├── admin/                      # 관리자 인터페이스와 관리
+├── ai/                         # AI 및 머신러닝 구성요소
+├── assets/                     # 프론트엔드 정적 자산
+├── backend_files/              # 컴파일된 백엔드 자산
+├── config/                     # 설정 파일
+├── data/                       # 데이터 파일과 데이터셋
+├── database/                   # 데이터베이스 파일
+├── docs/                       # 문서
+├── examples/                   # 예제 파일과 사용 방법
+├── hardware/                   # 하드웨어 관련 파일
+├── ino/                        # Arduino/ESP32 펌웨어
+├── models/                     # 데이터 및 ML 모델
+├── node_modules/               # Node.js 의존성
+├── routes/                     # API 라우트 정의
+├── scripts/                    # 유틸리티/배포 스크립트
+├── security/                   # 보안 관련 구성요소
+├── server/                     # 서버 사이드 애플리케이션
+├── services/                   # 비즈니스 로직 서비스
+├── src/                        # 소스 코드 파일
+├── static/                     # 정적 웹 자산
+├── system/                     # 시스템 및 서비스 구성 파일
+├── templates/                  # 서버 사이드 HTML 템플릿
+├── tests/                      # 테스트 파일
+├── uploads/                    # 파일 업로드 저장소
+├── web/                        # 웹 관련 파일(HTML 등)
+├── app.js                      # 메인 Node.js 애플리케이션 진입점
+├── app.py                      # 메인 Python/Flask 애플리케이션 진입점
+├── ecosystem.config.js         # PM2 프로세스 구성
+├── package.json                # Node.js 프로젝트 메타데이터 및 의존성
+├── package-lock.json           # Node.js 락 파일
+├── README.md                   # 이 파일
+├── requirements.txt            # Python 의존성
+├── run_server.bat              # Windows 서버 시작 스크립트
+├── server.js                   # 메인 서버 구현(실행을 위해 루트에 유지)
+├── production-server.js        # 프로덕션 서버 구현(실행을 위해 루트에 유지)
+└── smartcompressor.db          # SQLite 데이터베이스 파일
 ```
 
-## 🔧 상세 사용법
+## 🧱 핵심 아키텍처
 
-### 1. data_collector.py - 데이터 수집 시뮬레이터
+### 백엔드 구성요소
+- **`app.js`** - 메인 Node.js 애플리케이션 진입점
+- **`app.py`** - 메인 Python/Flask 애플리케이션 진입점
+- **`server.js`** - 주요 서버 구현
+- **`production-server.js`** - 프로덕션 서버 구성
 
-듀얼 마이크 환경을 시뮬레이션하여 오디오 데이터를 수집합니다.
+### AI/ML 파이프라인
+- **`ai/ai_model_trainer.py`** - 핵심 모델 학습
+- **`ai/anomaly_detection_ai.py`** - 이상 탐지 알고리즘
+- **`ai/train_ai.py`** - AI 학습 스크립트
+- **`ai/run_diagnosis.py`** - 실시간 진단 스크립트
 
-```bash
-# 기본 사용법
-python data_collector.py --target target.wav --noise noise.wav
+### IoT 통합
+- **`ino/board_diagnosis.ino`** - 보드 하드웨어 진단
+- **`routes/esp32Routes.js`** - ESP32 통신 API
 
-# 듀얼 마이크 시뮬레이션 사용
-python data_collector.py --target target.wav --noise noise.wav --dual-mic --mic-distance 0.1
+### 프론트엔드 구성요소
+- **`web/`** - 웹 인터페이스 HTML 파일
+- **`static/`** - 정적 웹 자산(CSS, JS, 이미지)
+- **`templates/`** - 서버 사이드 HTML 템플릿
 
-# 옵션 설명
---target          # 타겟 오디오 파일 경로
---noise           # 노이즈 오디오 파일 경로  
---output          # 출력 디렉토리 (기본값: data/raw)
---duration        # 수집할 오디오 길이 (초, 기본값: 5.0)
---sample-rate     # 샘플링 레이트 (기본값: 22050)
---dual-mic        # 듀얼 마이크 환경 시뮬레이션 사용
---mic-distance    # 마이크 간 거리 (미터, 기본값: 0.1)
-```
-
-**출력 파일:**
-- `target_with_noise_YYYYMMDD_HHMMSS.wav` - 타겟 + 노이즈 합성 오디오
-- `noise_only_YYYYMMDD_HHMMSS.wav` - 노이즈만 오디오
-
-### 2. preprocessor.py - 전처리 모듈
-
-노이즈 제거 및 스펙트로그램 생성을 수행합니다.
-
-```bash
-# 기본 사용법
-python preprocessor.py --target target_with_noise.wav --noise noise_only.wav
-
-# 다중 윈도우 크기로 스펙트로그램 생성
-python preprocessor.py --target target.wav --noise noise.wav --multiple-windows --window-sizes 5.0 3.0 1.0
-
-# 옵션 설명
---target              # 타겟 오디오 파일 경로
---noise               # 노이즈 오디오 파일 경로
---output-processed    # 정제된 오디오 출력 디렉토리 (기본값: data/processed)
---output-spectrograms # 스펙트로그램 출력 디렉토리 (기본값: data/spectrograms)
---image-size          # 이미지 크기 (기본값: 256 256)
---colormap            # 컬러맵 (기본값: magma)
---multiple-windows    # 다양한 윈도우 크기로 스펙트로그램 생성
---window-sizes        # 윈도우 크기들 (초)
-```
-
-**주요 기능:**
-- **노이즈 제거**: 위상 반전 + 스펙트럼 차감 기법
-- **스펙트로그램 생성**: 256x256 픽셀, magma 컬러맵
-- **다중 윈도우**: 다양한 시간 윈도우로 분석
-
-### 3. labeling_tool.py - 전문가 라벨링 GUI
-
-Streamlit 기반의 웹 인터페이스로 스펙트로그램을 라벨링합니다.
-
-```bash
-# Streamlit 서버 시작
-streamlit run labeling_tool.py
-
-# 특정 디렉토리 지정
-streamlit run labeling_tool.py -- --input-dir data/spectrograms
-
-# 옵션 설명
---input-dir    # 라벨링할 스펙트로그램 디렉토리 (기본값: data/spectrograms)
---port         # 서버 포트 (기본값: 8501)
-```
-
-**라벨링 클래스:**
-- **정상 가동음** (`normal`) - 정상적인 압축기 가동음
-- **냉기 누설 신호** (`leak`) - 냉매 누설로 인한 이상 신호  
-- **과부하 신호** (`overload`) - 과부하 상태의 이상 신호
-
-**GUI 기능:**
-- 진행 상황 실시간 표시
-- 키보드 단축키 지원 (1, 2, 3, 스페이스바)
-- 라벨링 히스토리 확인
-- 이미지 건너뛰기 기능
-
-### 4. train_ai.py - AI 훈련 스크립트
-
-라벨링된 데이터로 CNN 모델을 훈련합니다.
-
-```bash
-# 기본 사용법
-python train_ai.py
-
-# 고급 옵션
-python train_ai.py --data-dir labeled_data --epochs 100 --batch-size 64 --image-size 256 256
-
-# 옵션 설명
---data-dir           # 라벨링된 데이터 디렉토리 (기본값: labeled_data)
---output-dir         # 모델 저장 디렉토리 (기본값: models)
---results-dir        # 결과 저장 디렉토리 (기본값: results)
---epochs             # 훈련 에포크 수 (기본값: 50)
---batch-size         # 배치 크기 (기본값: 32)
---image-size         # 이미지 크기 (기본값: 256 256)
---validation-split   # 검증 데이터 비율 (기본값: 0.2)
-```
-
-**모델 구조:**
-- 4개 컨볼루션 블록 (32, 64, 128, 256 필터)
-- 배치 정규화 및 드롭아웃
-- 전역 평균 풀링
-- 2개 완전 연결 레이어 (512, 256)
-- 3개 클래스 출력 (정상, 누설, 과부하)
-
-**출력 파일:**
-- `models/model.h5` - 훈련된 모델
-- `models/class_info.txt` - 클래스 정보
-- `results/training_history_*.png` - 훈련 히스토리 그래프
-
-### 5. run_diagnosis.py - 실시간 진단 스크립트
-
-새로운 오디오 파일을 분석하여 AI 진단을 수행합니다.
-
-```bash
-# 기본 사용법
-python run_diagnosis.py --target new_target.wav --noise new_noise.wav
-
-# 상세 로그와 함께
-python run_diagnosis.py --target target.wav --noise noise.wav --verbose
-
-# 옵션 설명
---target    # 타겟 오디오 파일 경로 (필수)
---noise     # 노이즈 오디오 파일 경로 (필수)
---model     # 훈련된 모델 파일 경로 (기본값: models/model.h5)
---output    # 결과 저장 디렉토리 (기본값: diagnosis_results)
---verbose   # 상세 로그 출력
-```
-
-**진단 결과:**
-- 예측된 클래스와 신뢰도
-- 모든 클래스별 확률 분포
-- 시각적 확률 바 차트
-- 권장사항 및 조치 방안
-
-## 📊 예제 출력
-
-### 진단 결과 예시
+## 🔄 시스템 흐름
 
 ```
-============================================================
-🔍 AI 오디오 진단 결과
-============================================================
-📅 진단 시간: 20241201_143022
-📁 타겟 오디오: data/raw/target_with_noise_20241201_143000.wav
-📁 노이즈 오디오: data/raw/noise_only_20241201_143000.wav
-
-🎯 진단 결과:
-   상태: 이상
-   분류: 냉기 누설 신호
-   신뢰도: 95.2%
-
-📊 모든 클래스별 확률:
-   냉기 누설 신호    : 95.2% ████████████████████
-   과부하 신호      : 3.8%  ████░░░░░░░░░░░░░░░░
-   정상 가동음      : 1.0%  █░░░░░░░░░░░░░░░░░░░
-
-💡 권장사항:
-   ⚠️ 냉매 누설이 의심됩니다.
-   🔧 즉시 전문가에게 점검을 요청하세요.
-   🚨 안전을 위해 압축기를 중단하는 것을 고려하세요.
-============================================================
+[물리적 압축기] → [ESP32 센서] → [SignalCraft 서버] → [AI 분석] → [대시보드]
+         ↓               ↓                 ↓               ↓            ↓
+    오디오 신호     →   I2S 전송   →   네트워크 → 저장소   →  ML 모델  →  결과
 ```
 
-## 🛠️ 관리자 시스템
+### 데이터 처리 단계:
+1. **데이터 수집**: ESP32 센서가 산업용 압축기의 오디오 데이터를 수집
+2. **데이터 전송**: 오디오 데이터가 HTTP API를 통해 SignalCraft 서버로 전송
+3. **데이터 저장**: 원본/가공 데이터를 데이터베이스/파일시스템에 저장
+4. **AI 처리**: 이상 탐지 모델이 오디오 패턴을 분석
+5. **결과 생성**: 분류 결과와 신뢰도(Confidence) 점수 산출
+6. **대시보드 표시**: 시스템 상태와 이상 징후를 시각화
+7. **알림**: 감지 결과에 따라 알림 전송
 
-### 서비스 운영 관리 시스템
-- **AWS Management Console & GitHub 벤치마킹**
-- 매장 등록 및 승인 시스템
-- 사용자 권한 및 역할 관리
-- 서비스 상태 모니터링
-- 로그 관리 및 분석
-- 고객 지원 티켓 시스템
-- 감사 로그 및 보안 관리
-- 백업 및 복구 시스템
-- 성능 모니터링 및 알림
+## 🛠️ 기술 스택
 
-### 접근 방법
-```bash
-# 관리자 대시보드
-http://localhost:8000/admin
-```
+- **백엔드**: Python(Flask), Node.js(Express)
+- **데이터베이스**: SQLite(기본), 향후 PostgreSQL로 마이그레이션 예정
+- **AI/ML**: TensorFlow, scikit-learn, librosa(오디오 처리)
+- **프론트엔드**: HTML/CSS/JavaScript, Bootstrap
+- **IoT**: ESP32 마이크로컨트롤러(I2S 오디오 인터페이스)
+- **배포**: Docker, PM2, Nginx, EC2
 
-### 관리자 기능
-- **매장 관리**: 매장 등록, 승인, 정지, 삭제
-- **사용자 관리**: 사용자 생성, 권한 관리, 역할 할당
-- **모니터링**: 서비스 상태, 시스템 메트릭, 실시간 모니터링
-- **로그 관리**: 로그 조회, 내보내기, 정리
-- **고객 지원**: 티켓 생성, 할당, 상태 관리
-- **보안 관리**: 보안 이벤트, IP 차단, 감사 로그
-- **백업 관리**: 백업 생성, 복원, 다운로드
-- **성능 모니터링**: 성능 메트릭, 알림, 최적화
+## 📋 핵심 파일 요약
 
-## 🛠️ 고급 설정
+| 디렉토리 | 주요 파일 | 목적 |
+|-----------|-----------|---------|
+| `ai/` | `ai_model_trainer.py`, `anomaly_detection_ai.py` | AI 모델 학습 및 추론 |
+| `services/` | `dashboard_service.py`, `ai_service.py` | 비즈니스 로직 구현 |
+| `routes/` | `dashboard_routes.py`, `ai_routes.py` | API 엔드포인트 정의 |
+| `ino/` | `board_diagnosis.ino`, `ice_cream_sensor_final.ino` | ESP32 센서 펌웨어 |
+| `src/` | 서버 및 애플리케이션 소스 파일 | 핵심 애플리케이션 로직 |
+| `data/` | 다양한 하위 디렉토리 | 데이터 저장 및 처리 |
+| `system/` | 서비스 구성 파일 | 시스템 및 배포 구성 |
+| `web/` | HTML 파일 | 웹 인터페이스 파일 |
 
-### 환경 변수 설정
+## 🚀 시작하기
 
-```bash
-# .env 파일 생성
-echo "CUDA_VISIBLE_DEVICES=0" > .env
-echo "TF_CPP_MIN_LOG_LEVEL=2" >> .env
-```
+### 사전 준비물
+- Python 3.8 이상
+- Node.js 14 이상
+- ESP32 개발 보드
+- 필요한 Python 패키지(`requirements.txt` 참고)
+- 필요한 Node.js 패키지(`package.json` 참고)
 
-### GPU 사용 설정
+### 설치
+1. 저장소 클론
+2. Python 의존성 설치: `pip install -r requirements.txt`
+3. Node.js 의존성 설치: `npm install`
+4. 환경 변수 설정: `.env` 템플릿 참고
+5. 데이터베이스 초기화: `python -c "from models.database import init_db; init_db()"`
+6. 애플리케이션 실행: `npm start` 또는 `node server.js`
 
-```python
-# GPU 메모리 동적 할당
-import tensorflow as tf
-gpus = tf.config.experimental.list_physical_devices('GPU')
-if gpus:
-    tf.config.experimental.set_memory_growth(gpus[0], True)
-```
+### 서버 실행
+- 개발용: `node server.js`
+- PM2 사용: `pm2 start ecosystem.config.js`
+- Windows용: `run_server.bat`
 
-### 배치 처리
+## 🛠️ 프로젝트 구성
 
-```bash
-# 여러 파일 일괄 처리
-for file in data/raw/target_*.wav; do
-    python run_diagnosis.py --target "$file" --noise "${file/target/noise}"
-done
-```
-
-## 🔍 문제 해결
-
-### 일반적인 문제
-
-1. **모델 파일을 찾을 수 없음**
-   ```bash
-   # 모델 훈련 먼저 실행
-   python train_ai.py
-   ```
-
-2. **메모리 부족 오류**
-   ```bash
-   # 배치 크기 줄이기
-   python train_ai.py --batch-size 16
-   ```
-
-3. **Streamlit 서버 시작 실패**
-   ```bash
-   # 포트 변경
-   streamlit run labeling_tool.py --server.port 8502
-   ```
-
-4. **오디오 파일 로드 실패**
-   ```bash
-   # 파일 형식 확인
-   file your_audio.wav
-   ```
-
-### 로그 확인
-
-```bash
-# 상세 로그와 함께 실행
-python run_diagnosis.py --target target.wav --noise noise.wav --verbose
-```
-
-## 📈 성능 최적화
-
-### 훈련 성능 향상
-
-1. **데이터 증강 사용**
-   - 이미지 회전, 이동, 확대/축소
-   - 노이즈 추가, 밝기 조절
-
-2. **하이퍼파라미터 튜닝**
-   ```bash
-   python train_ai.py --epochs 100 --batch-size 64 --learning-rate 0.0001
-   ```
-
-3. **조기 종료 사용**
-   - 검증 손실이 10 에포크 동안 개선되지 않으면 훈련 중단
-
-### 추론 성능 향상
-
-1. **모델 양자화**
-   ```python
-   # TensorFlow Lite 변환
-   converter = tf.lite.TFLiteConverter.from_keras_model(model)
-   tflite_model = converter.convert()
-   ```
-
-2. **배치 처리**
-   - 여러 파일을 한 번에 처리
-
-## 🔧 확장 가능성
-
-### 새로운 클래스 추가
-
-1. `labeling_tool.py`에서 클래스 수정
-2. `train_ai.py`에서 `num_classes` 업데이트
-3. `run_diagnosis.py`에서 클래스 매핑 수정
-
-### 다른 오디오 형식 지원
-
-1. `preprocessor.py`에서 추가 형식 지원
-2. `librosa`의 `load` 함수 옵션 수정
-
-### 실시간 스트리밍
-
-1. `run_diagnosis.py`를 웹 서비스로 변환
-2. WebSocket을 통한 실시간 데이터 전송
-3. 모바일 앱 연동
-
-## 📚 참고 자료
-
-- [Librosa 공식 문서](https://librosa.org/)
-- [TensorFlow/Keras 가이드](https://www.tensorflow.org/guide/keras)
-- [Streamlit 문서](https://docs.streamlit.io/)
-- [산업용 오디오 분석 연구](https://example.com/research)
-
-## 📄 라이선스
-
-MIT License - 자세한 내용은 LICENSE 파일을 참조하세요.
+프로젝트는 다음과 같은 원칙으로 구성되었습니다:
+- 핵심 실행 파일과 주요 진입점은 루트 디렉토리에 유지
+- 구성 파일은 `config/` 디렉토리에 위치
+- 서비스 관련 파일은 `services/` 디렉토리에 위치
+- API 라우트 정의는 `routes/` 디렉토리에 위치
+- 웹 파일은 `web/` 디렉토리에 위치
+- 시스템/서비스 구성 파일은 `system/` 디렉토리에 위치
+- 테스트 파일은 `tests/` 디렉토리에 위치
+- 모든 소스 코드 파일은 `src/` 디렉토리에 위치
+- AI 관련 파일은 `ai/` 디렉토리에 위치
+- 프론트엔드 자산은 `static/` 및 `assets/` 디렉토리에 위치
 
 ## 🤝 기여하기
 
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+SignalCraft 프로젝트에 대한 기여를 환영합니다! 자세한 내용은 [CONTRIBUTING.md](docs/contributing.md)를 참조하세요.
+
+## 📄 라이선스
+
+이 프로젝트는 **MIT License**를 따릅니다. 자세한 내용은 [LICENSE](LICENSE) 파일을 참조하세요.
 
 ## 📞 지원
 
-문제가 발생하거나 질문이 있으시면 이슈를 생성해주세요.
+지원이 필요하시면 GitHub 저장소에 이슈를 생성하시거나 메인테이너에게 연락해 주세요.
 
 ---
 
-**🎵 AI 오디오 진단 시스템으로 산업용 압축기의 건강 상태를 지켜보세요!**
+**SignalCraft** — AI 기반 오디오 분석으로 산업 유지보수를 강화합니다. 🔊🏭

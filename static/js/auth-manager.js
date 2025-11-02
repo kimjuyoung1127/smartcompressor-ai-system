@@ -54,38 +54,33 @@ class AuthManager {
     }
     
     toggleAuthButtons() {
-        const loginBtn = document.querySelector('[onclick="showLoginModal()"]');
+        // Desktop header elements
+        const loginLink = document.getElementById('loginLink');
+        const logoutLink = document.getElementById('logoutLink');
         const registerBtn = document.querySelector('[onclick="showRegisterModal()"]');
-        const logoutBtn = document.getElementById('logoutBtn');
+        
+        // Mobile header elements
+        const mobileLoginLink = document.getElementById('mobileLoginLink');
+        const mobileLogoutLink = document.getElementById('mobileLogoutLink');
         
         if (this.isLoggedIn) {
-            // 로그인 상태: 로그인/회원가입 버튼 숨김, 로그아웃 버튼 표시
-            if (loginBtn) loginBtn.style.display = 'none';
+            // 로그인 상태: 로그인 버튼 숨김, 로그아웃 버튼 표시
+            if (loginLink) loginLink.style.display = 'none';
+            if (logoutLink) logoutLink.style.display = 'inline';
             if (registerBtn) registerBtn.style.display = 'none';
             
-            // 로그아웃 버튼이 없으면 생성
-            if (!logoutBtn) {
-                this.createLogoutButton();
-            } else {
-                logoutBtn.style.display = 'inline-block';
-            }
+            // Mobile
+            if (mobileLoginLink) mobileLoginLink.style.display = 'none';
+            if (mobileLogoutLink) mobileLogoutLink.style.display = 'inline';
         } else {
-            // 비로그인 상태: 로그인/회원가입 버튼 표시, 로그아웃 버튼 숨김
-            if (loginBtn) loginBtn.style.display = 'inline-block';
+            // 비로그인 상태: 로그인 버튼 표시, 로그아웃 버튼 숨김
+            if (loginLink) loginLink.style.display = 'inline';
+            if (logoutLink) logoutLink.style.display = 'none';
             if (registerBtn) registerBtn.style.display = 'inline-block';
-            if (logoutBtn) logoutBtn.style.display = 'none';
-        }
-    }
-    
-    createLogoutButton() {
-        const navbar = document.querySelector('.navbar-nav');
-        if (navbar) {
-            const logoutBtn = document.createElement('button');
-            logoutBtn.id = 'logoutBtn';
-            logoutBtn.className = 'btn btn-outline-light me-2';
-            logoutBtn.innerHTML = '<i class="fas fa-sign-out-alt me-1"></i>로그아웃';
-            logoutBtn.onclick = () => this.logout();
-            navbar.appendChild(logoutBtn);
+            
+            // Mobile
+            if (mobileLoginLink) mobileLoginLink.style.display = 'inline';
+            if (mobileLogoutLink) mobileLogoutLink.style.display = 'none';
         }
     }
     

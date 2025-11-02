@@ -7,7 +7,8 @@
             <a href="#features">기능</a>
             <a href="#demo">체험</a>
             <a href="#pricing">요금제</a>
-            <a href="#" onclick="showLoginModal()">로그인</a>
+            <a href="#" onclick="showLoginModal()" id="loginLink" style="display: inline;">로그인</a>
+            <a href="#" id="logoutLink" style="display: none;" onclick="window.authManager.logout()">로그아웃</a>
             <a href="#" class="btn btn-primary" onclick="showLoginModal()">무료 체험하기</a>
         </nav>
         <button class="mobile-menu-toggle" aria-label="모바일 메뉴 열기">
@@ -21,7 +22,8 @@
                 <a href="#features">기능</a>
                 <a href="#demo">체험</a>
                 <a href="#pricing">요금제</a>
-                <a href="#" onclick="showLoginModal()">로그인</a>
+                <a href="#" onclick="showLoginModal()" id="mobileLoginLink" style="display: inline;">로그인</a>
+                <a href="#" id="mobileLogoutLink" style="display: none;" onclick="window.authManager.logout()">로그아웃</a>
                 <a href="#" class="btn btn-primary" onclick="showLoginModal()">무료 체험하기</a>
             </div>
         </nav>
