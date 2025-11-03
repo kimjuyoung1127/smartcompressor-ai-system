@@ -27,8 +27,8 @@ const STATIC_URLS = [
   '/static/js/dashboard.js',
   '/static/js/notification_dashboard.js',
   '/static/manifest.json',
-  '/static/icons/icon-192x192.png',
-  '/static/icons/icon-512x512.png'
+  '/static/icons/pwa-192x192.png',
+  '/static/icons/pwa-512x512.png'
 ];
 
 // API endpoints to cache (Starbucks App style)
@@ -259,8 +259,8 @@ self.addEventListener('push', event => {
   
   const options = {
     body: '새로운 알림이 있습니다',
-    icon: '/static/icons/icon-192x192.png',
-    badge: '/static/icons/badge-72x72.png',
+    icon: '/static/icons/pwa-192x192.png',
+    badge: '/static/icons/pwa-192x192.png',
     vibrate: [200, 100, 200],
     data: {
       url: '/mobile_app/notifications'
@@ -359,8 +359,8 @@ async function syncOfflineItem(item) {
 async function showNotification(notification) {
   const options = {
     body: notification.message,
-    icon: '/static/icons/icon-192x192.png',
-    badge: '/static/icons/badge-72x72.png',
+    icon: '/static/icons/pwa-192x192.png',
+    badge: '/static/icons/pwa-192x192.png',
     vibrate: [200, 100, 200],
     data: {
       url: notification.url || '/mobile_app/notifications',

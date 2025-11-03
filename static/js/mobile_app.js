@@ -87,27 +87,56 @@ class TeslaMobileApp {
     }
 
     async initPWA() {
+        console.log('PWA 초기화 시작');
+        
         if ('serviceWorker' in navigator) {
             try {
                 const registration = await navigator.serviceWorker.ready;
-                console.log('✅ Service Worker 준비 완료');
+                console.log('✅ Service Worker 준비 완료:', registration);
+                
+                // 서비스 워커 상태 확인
+                if (registration.active) {
+                    console.log('✅ 활성화된 서비스 워커:', registration.active.state);
+                }
+                
+                // 알림 권한 요청
                 await this.requestNotificationPermission();
                 
                 // 백그라운드 동기화 등록
                 if ('sync' in window.ServiceWorkerRegistration.prototype) {
+                    console.log('백그라운드 동기화 지원 확인');
                     await registration.sync.register('offline-data-sync');
+                    console.log('오프라인 데이터 동기화 등록 완료');
                 }
             } catch (error) {
                 console.error('❌ Service Worker 오류:', error);
+                console.error('오류 세부 정보:', {
+                    message: error.message,
+                    stack: error.stack,
+                    name: error.name
+                });
             }
+        } else {
+            console.error('❌ Service Worker를 지원하지 않는 브라우저입니다.');
         }
 
         // PWA 설치 프롬프트
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('앱 설치 프롬프트 이벤트 발생');
+            console.log('사용 가능한 플랫폼:', e.platforms);
+            
             e.preventDefault();
             deferredPrompt = e;
+            
+            // 설치 가능 상태를 UI에 반영
             this.showInstallPrompt(deferredPrompt);
+        });
+        
+        // 앱 설치 완료 이벤트
+        window.addEventListener('appinstalled', () => {
+            console.log('🎉 앱 설치 완료 이벤트 발생');
+            this.showToast('앱이 성공적으로 설치되었습니다!', 'success');
         });
     }
 

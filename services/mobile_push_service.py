@@ -363,7 +363,7 @@ class MobilePushService:
         
         # 기본 아이콘 설정
         icon = kwargs.get('icon', '/static/icons/icon-192x192.png')
-        badge = kwargs.get('badge', '/static/icons/badge-72x72.png')
+        badge = kwargs.get('badge', '/static/icons/pwa-192x192.png')
         
         # 알림 타입별 기본 설정
         if notification_type == PushNotificationType.DIAGNOSIS:
