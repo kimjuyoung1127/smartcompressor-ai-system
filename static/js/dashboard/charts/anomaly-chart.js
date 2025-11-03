@@ -42,3 +42,5 @@ class AnomalyChart {
         }
     }
 }
+
+export { AnomalyChart };

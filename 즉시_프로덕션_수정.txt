@@ -1,0 +1,21 @@
+# 프로덕션 서버에서 즉시 실행할 명령어
+
+# 1. PM2 프로세스 삭제
+pm2 delete signalcraft-app
+
+# 2. 올바른 디렉토리로 이동
+cd ~/smartcompressor-ai-system
+
+# 3. 최신 코드 받기
+git pull origin main
+
+# 4. 프로세스 다시 시작
+pm2 start ecosystem.config.js
+
+# 5. 설정 저장
+pm2 save
+
+# 6. 상태 확인
+pm2 status
+pm2 logs signalcraft-app --lines 30
+

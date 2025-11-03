@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 전체 데이터 조회</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 32px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .control-group label {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-bottom: 5px;
+        }
+
+        .control-group input,
+        .control-group select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        .stats {
+            background: #ecf0f1;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            max-height: 600px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #2c3e50;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .timestamp {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+        }
+
+        .error {
+            background: #e74c3c;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .device-filter {
+            display: inline-flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 ESP32 전체 데이터 조회</h1>
+
+        <div class="controls">
+            <div class="control-group">
+                <label>디바이스 ID 필터</label>
+                <input type="text" id="deviceFilter" placeholder="예: ICE_STORE_24H_002">
+            </div>
+            <div class="control-group">
+                <label>표시 항목 수</label>
+                <select id="limitSelect">
+                    <option value="50">50개</option>
+                    <option value="100">100개</option>
+                    <option value="500">500개</option>
+                    <option value="1000">1,000개</option>
+                    <option value="all">전체</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>&nbsp;</label>
+                <button onclick="loadAllData()">조회</button>
+            </div>
+            <div class="control-group">
+                <label>&nbsp;</label>
+                <button onclick="exportData()">CSV 내보내기</button>
+            </div>
+        </div>
+
+        <div class="stats" id="stats">
+            <div class="stat-item">
+                <span class="stat-label">총 데이터</span>
+                <span class="stat-value" id="totalCount">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">표시 중</span>
+                <span class="stat-value" id="displayCount">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">로딩 시간</span>
+                <span class="stat-value" id="loadTime">0ms</span>
+            </div>
+        </div>
+
+        <div id="status"></div>
+
+        <div class="table-container">
+            <table id="dataTable">
+                <thead>
+                    <tr>
+                        <th>시간</th>
+                        <th>디바이스 ID</th>
+                        <th>RMS 에너지</th>
+                        <th>데시벨 (dB)</th>
+                        <th>압축기 상태</th>
+                        <th>이상 점수</th>
+                        <th>효율성</th>
+                        <th>센서 번호</th>
+                        <th>위치</th>
+                    </tr>
+                </thead>
+                <tbody id="dataBody">
+                    <tr>
+                        <td colspan="9" class="loading">데이터를 조회하려면 '조회' 버튼을 클릭하세요</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let allData = [];
+        let currentData = [];
+
+        async function loadAllData() {
+            const deviceFilter = document.getElementById('deviceFilter').value;
+            const limit = document.getElementById('limitSelect').value;
+            
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = '<div class="loading">데이터 로딩 중...</div>';
+
+            const startTime = Date.now();
+
+            try {
+                let url = '/api/esp32/all';
+                if (deviceFilter) {
+                    url += `?device_id=${encodeURIComponent(deviceFilter)}`;
+                }
+
+                console.log('[DEBUG] Loading data from:', url);
+                const response = await fetch(url);
+                const result = await response.json();
+
+                const loadTime = Date.now() - startTime;
+                document.getElementById('loadTime').textContent = loadTime + 'ms';
+
+                if (result.success && result.data) {
+                    allData = result.data;
+                    
+                    // Limit data if needed
+                    if (limit !== 'all') {
+                        currentData = allData.slice(0, parseInt(limit));
+                    } else {
+                        currentData = allData;
+                    }
+
+                    displayData(currentData);
+                    document.getElementById('totalCount').textContent = allData.length;
+                    document.getElementById('displayCount').textContent = currentData.length;
+                    
+                    statusDiv.innerHTML = '<div style="background: #27ae60; color: white; padding: 10px; border-radius: 5px;">✅ 데이터 로드 완료</div>';
+                } else {
+                    statusDiv.innerHTML = '<div class="error">❌ 데이터를 불러올 수 없습니다</div>';
+                }
+            } catch (error) {
+                console.error('[ERROR]', error);
+                statusDiv.innerHTML = '<div class="error">❌ 오류: ' + error.message + '</div>';
+            }
+        }
+
+        function displayData(data) {
+            const tbody = document.getElementById('dataBody');
+            
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" class="loading">데이터가 없습니다</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.map(item => {
+                const date = new Date(item.timestamp);
+                const formattedDate = date.toLocaleString('ko-KR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+
+                const compressorState = item.compressor_state === 1 ? 'ON' : 'OFF';
+                const compressorColor = compressorState === 'ON' ? '#e74c3c' : '#27ae60';
+                const decibel = item.decibel_level ? item.decibel_level.toFixed(1) : 'N/A';
+                const anomalyScore = item.anomaly_score ? item.anomaly_score.toFixed(3) : '0.000';
+
+                return `
+                    <tr>
+                        <td class="timestamp">${formattedDate}</td>
+                        <td>${item.device_id || 'N/A'}</td>
+                        <td>${item.rms_energy ? item.rms_energy.toFixed(2) : 'N/A'}</td>
+                        <td>${decibel}</td>
+                        <td style="color: ${compressorColor}; font-weight: bold;">${compressorState}</td>
+                        <td>${anomalyScore}</td>
+                        <td>${item.efficiency_score ? item.efficiency_score.toFixed(3) : 'N/A'}</td>
+                        <td>${item.sensor_number || 'N/A'}</td>
+                        <td>${item.location || 'N/A'}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function exportData() {
+            if (currentData.length === 0) {
+                alert('먼저 데이터를 조회해주세요');
+                return;
+            }
+
+            // CSV 헤더
+            const headers = ['시간', '디바이스 ID', 'RMS 에너지', '데시벨 (dB)', '압축기 상태', '이상 점수', '효율성', '센서 번호', '위치'];
+            
+            // CSV 데이터
+            const csv = [
+                headers.join(','),
+                ...currentData.map(item => {
+                    const date = new Date(item.timestamp);
+                    const formattedDate = date.toLocaleString('ko-KR');
+                    const compressorState = item.compressor_state === 1 ? 'ON' : 'OFF';
+                    const decibel = item.decibel_level ? item.decibel_level.toFixed(1) : 'N/A';
+                    
+                    return [
+                        formattedDate,
+                        item.device_id || '',
+                        item.rms_energy ? item.rms_energy.toFixed(2) : '',
+                        decibel,
+                        compressorState,
+                        item.anomaly_score ? item.anomaly_score.toFixed(3) : '0.000',
+                        item.efficiency_score ? item.efficiency_score.toFixed(3) : '',
+                        item.sensor_number || '',
+                        item.location || ''
+                    ].join(',');
+                })
+            ].join('\n');
+
+            // 다운로드
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `esp32_data_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // 초기 페이지 로드시 자동으로 데이터 조회
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('[DEBUG] Page loaded');
+            // 자동 조회는 하지 않음 (데이터가 많아서)
+        });
+    </script>
+</body>
+</html>
+

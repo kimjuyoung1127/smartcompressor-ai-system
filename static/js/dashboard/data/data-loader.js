@@ -64,3 +64,5 @@ class DataLoader {
         }
     }
 }
+
+export { DataLoader };
