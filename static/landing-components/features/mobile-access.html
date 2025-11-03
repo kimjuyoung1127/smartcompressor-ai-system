@@ -13,8 +13,127 @@
                     <li>푸시 알림으로 실시간 이상 감지</li>
                     <li>차트와 통계로 냉동고 성능 분석</li>
                 </ul>
-                <a href="/dashboard" class="btn btn-light">앱 다운로드</a>
+                <button id="pwa-install-btn" class="btn btn-light">앱 설치</button>
             </div>
         </div>
     </div>
 </div>
+
+<!-- PWA Installation Script -->
+<script>
+// Check if the browser supports PWA installation
+let deferredPrompt;
+let installBtn;
+
+// Comprehensive PWA installation logging
+console.log('PWA Installation Script Loaded');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    console.log('beforeinstallprompt event fired');
+    console.log('Available platforms:', e.platforms);
+    
+    // Prevent the mini-infobar from appearing on mobile
+    e.preventDefault();
+    // Stash the event so it can be triggered later
+    deferredPrompt = e;
+    
+    // Enable the install button now that we know installation is possible
+    if (installBtn) {
+        installBtn.disabled = false;
+        installBtn.textContent = '앱 설치';
+        console.log('Install button enabled');
+    }
+});
+
+// Add click event to the install button
+document.addEventListener('DOMContentLoaded', () => {
+    installBtn = document.getElementById('pwa-install-btn');
+    
+    if (installBtn) {
+        console.log('Install button found');
+        // Initially disable the button until beforeinstallprompt fires
+        installBtn.disabled = true;
+        
+        installBtn.addEventListener('click', async (event) => {
+            console.log('Install button clicked');
+            
+            // Check if app is already installed
+            if (isAppInstalled()) {
+                console.log('App already installed, redirecting to /mobile_app');
+                window.location.href = '/mobile_app';
+                return;
+            }
+            
+            if (deferredPrompt) {
+                console.log('Showing install prompt');
+                
+                try {
+                    // Show the install prompt
+                    deferredPrompt.prompt();
+                    
+                    // Wait for the user to respond to the prompt
+                    const { outcome } = await deferredPrompt.userChoice;
+                    
+                    console.log('User response to install prompt:', outcome);
+                    
+                    if (outcome === 'accepted') {
+                        console.log('User accepted the install prompt');
+                        // Update button text after successful installation
+                        installBtn.textContent = '앱 실행';
+                    } else {
+                        console.log('User dismissed the install prompt');
+                    }
+                } catch (error) {
+                    console.error('Error showing install prompt:', error);
+                }
+                
+                // Reset the deferred prompt
+                deferredPrompt = null;
+            } else {
+                console.log('No deferred prompt available, showing fallback message');
+                // Fallback: Show a message about manual installation
+                alert('앱을 설치하려면 브라우저 주소 표시줄에서 "설치" 버튼을 클릭하세요.');
+            }
+        });
+    } else {
+        console.error('Install button not found');
+    }
+});
+
+// Check if the app is already installed
+function isAppInstalled() {
+    console.log('Checking if app is installed');
+    
+    // Check if display mode is standalone (app installed)
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    const isNavigatorStandalone = window.navigator.standalone;
+    const hasAndroidReferrer = document.referrer.includes('android-app://');
+    const hasIOSReferrer = document.referrer.includes('ios-app://');
+    
+    console.log('Display mode check:', isStandalone);
+    console.log('Navigator standalone check:', isNavigatorStandalone);
+    console.log('Android referrer check:', hasAndroidReferrer);
+    console.log('iOS referrer check:', hasIOSReferrer);
+    
+    const isInstalled = isStandalone || isNavigatorStandalone || hasAndroidReferrer || hasIOSReferrer;
+    console.log('App installation status:', isInstalled);
+    
+    return isInstalled;
+}
+
+// Update button text if app is already installed
+if (isAppInstalled()) {
+    const installBtn = document.getElementById('pwa-install-btn');
+    if (installBtn) {
+        installBtn.textContent = '앱 실행';
+        installBtn.addEventListener('click', () => {
+            window.location.href = '/mobile_app';
+        });
+    }
+} else {
+    // If not installed, set appropriate text for installation
+    if (installBtn) {
+        installBtn.textContent = '앱 설치 대기 중...';
+    }
+}
+</script>

@@ -158,6 +158,9 @@ section:not(.hero) .container {
 .main-nav a {
     color: var(--text-color);
     text-decoration: none;
+    min-width: 80px; /* Ensure consistent minimum width for login/logout */
+    text-align: center; /* Center the text */
+    padding: 8px 16px; /* Add consistent padding */
 }
 
 .main-nav a.btn {
@@ -239,6 +242,13 @@ section:not(.hero) .container {
     padding: 12px 0;
     border-bottom: 1px solid var(--border-color);
     font-size: 1.1rem;
+}
+
+.mobile-nav a#mobileLoginLink,
+.mobile-nav a#mobileLogoutLink {
+    padding: 12px 16px !important; /* Consistent padding for login/logout in mobile */
+    min-width: 80px; /* Consistent width for mobile */
+    text-align: center; /* Center the text */
 }
 
 .mobile-nav a.btn {

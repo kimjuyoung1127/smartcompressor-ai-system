@@ -13,8 +13,43 @@
     <meta name="apple-mobile-web-app-title" content="CompressorMgr">
     
     <!-- 아이콘 -->
-    <link rel="apple-touch-icon" href="/static/icons/icon-192x192.png">
-    <link rel="icon" type="image/png" sizes="192x192" href="/static/icons/icon-192x192.png">
+    <link rel="apple-touch-icon" href="/static/icons/pwa-192x192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/static/icons/pwa-192x192.png">
+    
+    <!-- PWA Installation Check Script -->
+    <script>
+        // Log PWA installation status
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('PWA Installation Status Check');
+            console.log('Display Mode:', window.matchMedia('(display-mode: standalone)').matches ? 'standalone' : 'browser');
+            console.log('Navigator Standalone:', !!navigator.standalone);
+            
+            // Log manifest availability
+            fetch('/static/manifest.json')
+                .then(response => {
+                    if (response.ok) {
+                        console.log('✅ 매니페스트 파일 접근 성공');
+                        return response.json();
+                    } else {
+                        console.error('❌ 매니페스트 파일 접근 실패:', response.status);
+                    }
+                })
+                .then(manifest => {
+                    if (manifest) {
+                        console.log('✅ 매니페스트 내용:', {
+                            name: manifest.name,
+                            short_name: manifest.short_name,
+                            start_url: manifest.start_url,
+                            display: manifest.display,
+                            icons_count: manifest.icons ? manifest.icons.length : 0
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ 매니페스트 파일 요청 실패:', error);
+                });
+        });
+    </script>
     
     <!-- CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -419,15 +454,45 @@
     <!-- Service Worker 등록 -->
     <script>
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/static/js/mobile_app/sw.js')
-                    .then(registration => {
-                        console.log('Service Worker 등록 성공:', registration);
-                    })
-                    .catch(error => {
-                        console.log('Service Worker 등록 실패:', error);
+            console.log('Service Worker 지원 확인');
+            
+            window.addEventListener('load', async () => {
+                try {
+                    console.log('서비스 워커 등록 시도 중...');
+                    
+                    const registration = await navigator.serviceWorker.register('/static/js/mobile_app/sw.js');
+                    console.log('Service Worker 등록 성공:', registration);
+                    
+                    // 서비스 워커 상태 확인
+                    console.log('Service Worker 상태:', registration.active ? registration.active.state : '없음');
+                    
+                    // 업데이트 확인
+                    registration.addEventListener('updatefound', () => {
+                        console.log('Service Worker 업데이트 발견');
+                        const newWorker = registration.installing;
+                        
+                        newWorker.addEventListener('statechange', () => {
+                            console.log('Service Worker 상태 변경:', newWorker.state);
+                        });
                     });
+                    
+                    // 현재 서비스 워커 상태 확인
+                    if (navigator.serviceWorker.controller) {
+                        console.log('서비스 워커가 현재 활성화되어 있음:', navigator.serviceWorker.controller);
+                    } else {
+                        console.log('서비스 워커가 현재 활성화되어 있지 않음');
+                    }
+                } catch (error) {
+                    console.error('Service Worker 등록 실패:', error);
+                    console.error('오류 세부 정보:', {
+                        message: error.message,
+                        stack: error.stack,
+                        name: error.name
+                    });
+                }
             });
+        } else {
+            console.log('이 브라우저는 Service Worker를 지원하지 않습니다.');
         }
     </script>
 </body>
