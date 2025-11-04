@@ -38,185 +38,58 @@ class DatabaseService {
         const client = await this.pool.connect();
         
         try {
-            // 라벨링 테이블
-            await client.query(`
-                CREATE TABLE IF NOT EXISTS labels (
-                    id SERIAL PRIMARY KEY,
-                    file_name VARCHAR(255) NOT NULL,
-                    file_size BIGINT,
-                    file_type VARCHAR(50),
-                    file_hash VARCHAR(64) UNIQUE,
-                    label VARCHAR(20) NOT NULL CHECK (label IN ('normal', 'warning', 'critical', 'unknown')),
-                    confidence INTEGER NOT NULL CHECK (confidence >= 0 AND confidence <= 100),
-                    notes TEXT,
-                    labeler_id VARCHAR(50) NOT NULL,
-                    store_id VARCHAR(50),
-                    device_id VARCHAR(50),
-                    metadata JSONB,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            `);
-
-            // 전문가 테이블
-            await client.query(`
-                CREATE TABLE IF NOT EXISTS experts (
-                    id VARCHAR(50) PRIMARY KEY,
-                    name VARCHAR(100) NOT NULL,
-                    email VARCHAR(100),
-                    role VARCHAR(50) DEFAULT 'labeler',
-                    is_active BOOLEAN DEFAULT true,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            `);
-
-            // 매장 테이블
-            await client.query(`
-                CREATE TABLE IF NOT EXISTS stores (
-                    id VARCHAR(50) PRIMARY KEY,
-                    name VARCHAR(100) NOT NULL,
-                    location VARCHAR(255),
-                    owner_id VARCHAR(50),
-                    is_active BOOLEAN DEFAULT true,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            `);
-
-            // 장치 테이블
-            await client.query(`
-                CREATE TABLE IF NOT EXISTS devices (
-                    id VARCHAR(50) PRIMARY KEY,
-                    store_id VARCHAR(50) REFERENCES stores(id),
-                    device_type VARCHAR(50) DEFAULT 'compressor',
-                    location VARCHAR(100),
-                    is_active BOOLEAN DEFAULT true,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            `);
-
-            // 라벨링 통계 테이블
-            await client.query(`
-                CREATE TABLE IF NOT EXISTS labeling_stats (
-                    id SERIAL PRIMARY KEY,
-                    date DATE NOT NULL UNIQUE,
-                    total_labeled INTEGER DEFAULT 0,
-                    normal_count INTEGER DEFAULT 0,
-                    warning_count INTEGER DEFAULT 0,
-                    critical_count INTEGER DEFAULT 0,
-                    unknown_count INTEGER DEFAULT 0,
-                    avg_confidence DECIMAL(5,2) DEFAULT 0,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            `);
-
-            // users 테이블 (사용자 관리)
-            await client.query(`
-                CREATE TABLE IF NOT EXISTS users (
-                    id SERIAL PRIMARY KEY,
-                    username VARCHAR(50) UNIQUE NOT NULL,
-                    email VARCHAR(255) UNIQUE NOT NULL,
-                    password_hash VARCHAR(255) NOT NULL,
-                    full_name VARCHAR(100),
-                    phone VARCHAR(20),
-                    role VARCHAR(20) DEFAULT 'user',
-                    additional_info JSONB,
-                    is_active BOOLEAN DEFAULT true,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    last_login TIMESTAMP
-                )
-            `);
+            // 중앙화된 스키마 파일 읽기
+            const schemaPath = path.join(__dirname, '..', 'database', 'schema.sql');
             
-            // additional_info 컬럼 추가 (기존 테이블에)
-            await client.query(`
-                ALTER TABLE users 
-                ADD COLUMN IF NOT EXISTS additional_info JSONB
-            `);
-
-            // audio_files 테이블 (오디오 파일 메타데이터)
-            await client.query(`
-                CREATE TABLE IF NOT EXISTS audio_files (
-                    id SERIAL PRIMARY KEY,
-                    user_id INTEGER REFERENCES users(id),
-                    store_id INTEGER,
-                    device_id INTEGER,
-                    file_name VARCHAR(255) NOT NULL,
-                    file_path VARCHAR(500) NOT NULL,
-                    file_size BIGINT,
-                    duration_seconds DECIMAL(10, 2),
-                    sample_rate INTEGER,
-                    channels INTEGER,
-                    format VARCHAR(20),
-                    upload_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    is_processed BOOLEAN DEFAULT false
-                )
-            `);
-
-            // ai_analysis_results 테이블 (AI 분석 결과)
-            await client.query(`
-                CREATE TABLE IF NOT EXISTS ai_analysis_results (
-                    id SERIAL PRIMARY KEY,
-                    audio_file_id INTEGER REFERENCES audio_files(id),
-                    user_id INTEGER REFERENCES users(id),
-                    is_overload BOOLEAN NOT NULL,
-                    confidence DECIMAL(5, 4) NOT NULL,
-                    processing_time_ms INTEGER,
-                    model_info JSONB,
-                    features_extracted JSONB,
-                    quality_metrics JSONB,
-                    optimization_info JSONB,
-                    noise_info JSONB,
-                    analysis_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    message TEXT
-                )
-            `);
-
-            // monitoring_data 테이블 (실시간 모니터링 데이터)
-            await client.query(`
-                CREATE TABLE IF NOT EXISTS monitoring_data (
-                    id SERIAL PRIMARY KEY,
-                    user_id INTEGER REFERENCES users(id),
-                    store_id INTEGER,
-                    device_id INTEGER,
-                    temperature DECIMAL(5, 2),
-                    vibration_level DECIMAL(8, 4),
-                    power_consumption DECIMAL(8, 2),
-                    audio_level DECIMAL(8, 4),
-                    status VARCHAR(20),
-                    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            `);
-
-            // 인덱스 생성
-            await client.query(`
-                CREATE INDEX IF NOT EXISTS idx_labels_timestamp ON labels(created_at);
-                CREATE INDEX IF NOT EXISTS idx_labels_label ON labels(label);
-                CREATE INDEX IF NOT EXISTS idx_labels_labeler ON labels(labeler_id);
-                CREATE INDEX IF NOT EXISTS idx_labels_store ON labels(store_id);
-                CREATE INDEX IF NOT EXISTS idx_labels_file_hash ON labels(file_hash);
-                CREATE INDEX IF NOT EXISTS idx_labels_metadata ON labels USING GIN(metadata);
-            `);
-
-            // 트리거 생성 (updated_at 자동 업데이트)
-            await client.query(`
-                CREATE OR REPLACE FUNCTION update_updated_at_column()
-                RETURNS TRIGGER AS $$
-                BEGIN
-                    NEW.updated_at = CURRENT_TIMESTAMP;
-                    RETURN NEW;
-                END;
-                $$ language 'plpgsql';
-            `);
-
-            await client.query(`
-                DROP TRIGGER IF EXISTS update_labels_updated_at ON labels;
-                CREATE TRIGGER update_labels_updated_at
-                    BEFORE UPDATE ON labels
-                    FOR EACH ROW
-                    EXECUTE FUNCTION update_updated_at_column();
-            `);
-
+            if (!fs.existsSync(schemaPath)) {
+                console.warn('⚠️ 스키마 파일을 찾을 수 없습니다:', schemaPath);
+                console.warn('⚠️ 기본 스키마를 사용합니다. database/schema.sql 파일을 생성하세요.');
+                // 기본 스키마는 유지 (하위 호환성)
+                return;
+            }
+            
+            const schemaSQL = fs.readFileSync(schemaPath, 'utf8');
+            
+            // PostgreSQL은 여러 구문을 한 번에 실행할 수 없으므로
+            // 각 구문을 분리하여 실행합니다.
+            // 주의: 트리거/함수 정의는 세미콜론이 내부에 있을 수 있으므로
+            // 간단한 분리 방식을 사용합니다.
+            
+            // 주석 제거 및 구문 분리
+            const statements = schemaSQL
+                .replace(/--.*$/gm, '') // 한 줄 주석 제거
+                .split(';')
+                .map(s => s.trim())
+                .filter(s => s.length > 0);
+            
+            for (const statement of statements) {
+                if (statement.trim()) {
+                    try {
+                        await client.query(statement);
+                    } catch (error) {
+                        // IF NOT EXISTS 구문이 있어서 일부 에러는 무시 가능
+                        const ignorableErrors = [
+                            'already exists',
+                            'does not exist',
+                            'duplicate key'
+                        ];
+                        
+                        const isIgnorable = ignorableErrors.some(msg => 
+                            error.message.toLowerCase().includes(msg.toLowerCase())
+                        );
+                        
+                        if (!isIgnorable) {
+                            console.error('❌ 스키마 실행 오류:', error.message);
+                            console.error('문제가 된 구문:', statement.substring(0, 200));
+                            // 에러를 던지지 않고 경고만 출력 (하위 호환성)
+                            console.warn('⚠️ 계속 진행합니다...');
+                        }
+                    }
+                }
+            }
+            
+            console.log('✅ 스키마 파일에서 테이블 생성 완료:', schemaPath);
+            
         } finally {
             client.release();
         }

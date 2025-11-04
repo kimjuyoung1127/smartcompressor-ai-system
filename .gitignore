@@ -17,6 +17,16 @@ __pycache__/
 *.sqlite3
 .env
 
+# Database directory - ignore data files but allow schema files
+database/*.db
+database/*.sqlite
+database/*.sqlite3
+# Allow schema files to be tracked
+!database/*.sql
+!database/*.md
+!database/*.js
+!database/migrations/
+
 # Log files
 *.log
 nohup.out
@@ -59,5 +69,5 @@ github_token.txt
 credentials.txt
 secrets.txt
 node_modules/
-database/
+# database/ is now partially ignored (only .db files)
 *.log
