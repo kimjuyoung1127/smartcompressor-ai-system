@@ -3,7 +3,7 @@ const express = require('express');
 const path = require('path');
 const corsMiddleware = require('./middleware/cors');
 const cookieParser = require('cookie-parser');
-const SQLiteDatabaseService = require('../services/sqlite_database_service');
+const DatabaseService = require('../services/database_service');
 
 // Sentry 초기화
 const Sentry = require("@sentry/node");
@@ -18,6 +18,7 @@ const monitoringRoutes = require('./routes/monitoringRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const weatherRoutes = require('./routes/weatherApi');
 const sensorDataRoutes = require('./routes/sensorDataApi');
+const labelingRoutes = require('./routes/labelingRoutes');
 
 const app = express();
 
@@ -32,7 +33,7 @@ Sentry.init({
   profilesSampleRate: 1.0,
   environment: process.env.NODE_ENV || 'production',
 });
-const db = new SQLiteDatabaseService();
+const db = new DatabaseService();
 
 // 미들웨어 설정
 app.use(corsMiddleware);
@@ -40,7 +41,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
-// 세션 검증 미들웨어 (authRoutes.js에서 가져옴)
+// 세션 검증 미들웨어 (PostgreSQL 기반)
 const verifySession = async (req, res, next) => {
     try {
         const sessionId = req.cookies.sessionId;
@@ -51,10 +52,16 @@ const verifySession = async (req, res, next) => {
         if (!session) {
             return res.status(401).redirect('/'); // 유효하지 않은 세션이면 홈으로
         }
+        
+        // sess 데이터에서 사용자 정보 추출
+        const sessData = session.sess;
+        
         req.user = {
-            userId: session.user_id,
-            username: session.username,
-            role: session.role
+            userId: sessData.user_id || sessData.user?.id,
+            username: sessData.user?.username,
+            email: sessData.user?.email,
+            role: sessData.user?.role,
+            roles: sessData.user?.roles || [sessData.user?.role]
         };
         next();
     } catch (error) {
@@ -176,6 +183,7 @@ app.use('/api/monitoring', monitoringRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/weather', weatherRoutes);
 app.use('/api/sensor', sensorDataRoutes);
+app.use('/api/labeling', labelingRoutes); // 라벨링 시스템 (RBAC 적용)
 
 // ESP32 API 라우트
 const esp32DashboardApi = require('./routes/esp32DashboardApi');

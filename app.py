@@ -20,7 +20,7 @@ from routes.ai_routes import ai_bp
 from routes.esp32_routes import esp32_bp
 from routes.notification_routes import notification_bp
 from routes.kakao_notification_routes import kakao_notification_bp
-from routes.enhanced_auth_routes import enhanced_auth_bp
+# from routes.enhanced_auth_routes import enhanced_auth_bp  # SQLite 제거 - Node.js 인증 사용
 from routes.iot_sensor_routes import iot_sensor_bp
 from routes.dashboard_routes import dashboard_bp
 from routes.mobile_app_routes import mobile_app_bp
@@ -99,8 +99,8 @@ def create_app():
     app.register_blueprint(notification_bp)
     # 카카오톡 알림 라우트 등록
     app.register_blueprint(kakao_notification_bp)
-    # 향상된 인증 라우트 등록
-    app.register_blueprint(enhanced_auth_bp)
+    # 향상된 인증 라우트 등록 (SQLite 제거 - Node.js 인증 사용)
+    # app.register_blueprint(enhanced_auth_bp)
     # IoT 센서 시스템 라우트 등록
     app.register_blueprint(iot_sensor_bp)
     # 대시보드 라우트 등록 # NEW

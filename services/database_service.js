@@ -14,7 +14,7 @@ class DatabaseService {
             user: process.env.DB_USER || 'postgres',
             host: process.env.DB_HOST || 'localhost',
             database: process.env.DB_NAME || 'smartcompressor_ai',
-            password: process.env.DB_PASSWORD || 'password',
+            password: process.env.DB_PASSWORD || 'signalcraft6898',
             port: process.env.DB_PORT || 5432,
             max: 20, // 최대 연결 수
             idleTimeoutMillis: 30000,
@@ -26,11 +26,32 @@ class DatabaseService {
 
     async init() {
         try {
-            // 테이블 생성
-            await this.createTables();
+            // 연결 테스트
+            const client = await this.pool.connect();
+            console.log('✅ PostgreSQL 연결 성공');
+            
+            // 테이블 존재 여부 확인
+            const result = await client.query(`
+                SELECT COUNT(*) as count 
+                FROM information_schema.tables 
+                WHERE table_schema = 'public' 
+                AND table_name = 'users'
+            `);
+            
+            const tablesExist = parseInt(result.rows[0].count) > 0;
+            
+            if (tablesExist) {
+                console.log('🗄️ 데이터베이스 테이블이 이미 존재합니다 (스키마 생성 건너뜀)');
+            } else {
+                console.log('🔨 데이터베이스 테이블 생성 중...');
+                await this.createTables();
+                console.log('✅ 데이터베이스 테이블 생성 완료');
+            }
+            
+            client.release();
             console.log('🗄️ PostgreSQL 데이터베이스 초기화 완료');
         } catch (error) {
-            console.error('데이터베이스 초기화 실패:', error);
+            console.error('❌ 데이터베이스 초기화 실패:', error.message);
         }
     }
 
@@ -38,27 +59,53 @@ class DatabaseService {
         const client = await this.pool.connect();
         
         try {
-            // 라벨링 테이블
+            // ===== 1단계: 참조되는 기본 테이블 먼저 생성 =====
+            
+            // users 테이블 (다른 테이블에서 참조됨)
             await client.query(`
-                CREATE TABLE IF NOT EXISTS labels (
+                CREATE TABLE IF NOT EXISTS users (
                     id SERIAL PRIMARY KEY,
-                    file_name VARCHAR(255) NOT NULL,
-                    file_size BIGINT,
-                    file_type VARCHAR(50),
-                    file_hash VARCHAR(64) UNIQUE,
-                    label VARCHAR(20) NOT NULL CHECK (label IN ('normal', 'warning', 'critical', 'unknown')),
-                    confidence INTEGER NOT NULL CHECK (confidence >= 0 AND confidence <= 100),
-                    notes TEXT,
-                    labeler_id VARCHAR(50) NOT NULL,
-                    store_id VARCHAR(50),
-                    device_id VARCHAR(50),
-                    metadata JSONB,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    username VARCHAR(50) UNIQUE NOT NULL,
+                    email VARCHAR(255) UNIQUE NOT NULL,
+                    password_hash VARCHAR(255) NOT NULL,
+                    full_name VARCHAR(100),
+                    phone VARCHAR(20),
+                    role VARCHAR(20) DEFAULT 'user',
+                    additional_info JSONB,
+                    is_active BOOLEAN DEFAULT true,
+                    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+                    last_login TIMESTAMPTZ
                 )
             `);
 
-            // 전문가 테이블
+            // stores 테이블
+            await client.query(`
+                CREATE TABLE IF NOT EXISTS stores (
+                    id VARCHAR(50) PRIMARY KEY,
+                    name VARCHAR(100) NOT NULL,
+                    location VARCHAR(255),
+                    owner_id VARCHAR(50),
+                    is_active BOOLEAN DEFAULT true,
+                    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+                )
+            `);
+
+            // ===== 2단계: users/stores를 참조하는 테이블 생성 =====
+            
+            // 장치 테이블
+            await client.query(`
+                CREATE TABLE IF NOT EXISTS devices (
+                    id VARCHAR(50) PRIMARY KEY,
+                    store_id VARCHAR(50) REFERENCES stores(id),
+                    device_type VARCHAR(50) DEFAULT 'compressor',
+                    location VARCHAR(100),
+                    is_active BOOLEAN DEFAULT true,
+                    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+                )
+            `);
+
+            // 전문가 테이블 (레거시 - experts는 users로 통합되었지만 호환성 유지)
             await client.query(`
                 CREATE TABLE IF NOT EXISTS experts (
                     id VARCHAR(50) PRIMARY KEY,
@@ -71,28 +118,30 @@ class DatabaseService {
                 )
             `);
 
-            // 매장 테이블
+            // 라벨링 테이블 (users를 참조)
             await client.query(`
-                CREATE TABLE IF NOT EXISTS stores (
-                    id VARCHAR(50) PRIMARY KEY,
-                    name VARCHAR(100) NOT NULL,
-                    location VARCHAR(255),
-                    owner_id VARCHAR(50),
-                    is_active BOOLEAN DEFAULT true,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                CREATE TABLE IF NOT EXISTS labels (
+                    id SERIAL PRIMARY KEY,
+                    file_name VARCHAR(255) NOT NULL,
+                    file_size BIGINT,
+                    file_type VARCHAR(50),
+                    file_hash VARCHAR(64) UNIQUE,
+                    label VARCHAR(20) NOT NULL CHECK (label IN ('normal', 'warning', 'critical', 'unknown')),
+                    confidence INTEGER NOT NULL CHECK (confidence >= 0 AND confidence <= 100),
+                    notes TEXT,
+                    labeler_id VARCHAR(50),
+                    store_id VARCHAR(50),
+                    device_id VARCHAR(50),
+                    metadata JSONB,
+                    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
                 )
             `);
-
-            // 장치 테이블
+            
+            // labeler_user_id 컬럼 추가 (users 테이블이 이미 생성되었으므로 안전)
             await client.query(`
-                CREATE TABLE IF NOT EXISTS devices (
-                    id VARCHAR(50) PRIMARY KEY,
-                    store_id VARCHAR(50) REFERENCES stores(id),
-                    device_type VARCHAR(50) DEFAULT 'compressor',
-                    location VARCHAR(100),
-                    is_active BOOLEAN DEFAULT true,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
+                ALTER TABLE labels 
+                ADD COLUMN IF NOT EXISTS labeler_user_id INTEGER REFERENCES users(id)
             `);
 
             // 라벨링 통계 테이블
@@ -106,32 +155,8 @@ class DatabaseService {
                     critical_count INTEGER DEFAULT 0,
                     unknown_count INTEGER DEFAULT 0,
                     avg_confidence DECIMAL(5,2) DEFAULT 0,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
                 )
-            `);
-
-            // users 테이블 (사용자 관리)
-            await client.query(`
-                CREATE TABLE IF NOT EXISTS users (
-                    id SERIAL PRIMARY KEY,
-                    username VARCHAR(50) UNIQUE NOT NULL,
-                    email VARCHAR(255) UNIQUE NOT NULL,
-                    password_hash VARCHAR(255) NOT NULL,
-                    full_name VARCHAR(100),
-                    phone VARCHAR(20),
-                    role VARCHAR(20) DEFAULT 'user',
-                    additional_info JSONB,
-                    is_active BOOLEAN DEFAULT true,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    last_login TIMESTAMP
-                )
-            `);
-            
-            // additional_info 컬럼 추가 (기존 테이블에)
-            await client.query(`
-                ALTER TABLE users 
-                ADD COLUMN IF NOT EXISTS additional_info JSONB
             `);
 
             // audio_files 테이블 (오디오 파일 메타데이터)
@@ -148,7 +173,7 @@ class DatabaseService {
                     sample_rate INTEGER,
                     channels INTEGER,
                     format VARCHAR(20),
-                    upload_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    upload_timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
                     is_processed BOOLEAN DEFAULT false
                 )
             `);
@@ -222,16 +247,21 @@ class DatabaseService {
         }
     }
 
-    // 라벨 저장
+    // 라벨 저장 (realschema.md 기준 - labeler_user_id 사용)
     async saveLabel(labelData) {
         const client = await this.pool.connect();
         
         try {
+            // labeler_user_id가 필수인지 확인
+            if (!labelData.labeler_user_id && !labelData.labeler_id) {
+                throw new Error('labeler_user_id 또는 labeler_id는 필수입니다');
+            }
+            
             const query = `
                 INSERT INTO labels (
                     file_name, file_size, file_type, file_hash, label, confidence, 
-                    notes, labeler_id, store_id, device_id, metadata
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                    notes, labeler_id, labeler_user_id, store_id, device_id, metadata
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
                 RETURNING *
             `;
             
@@ -243,9 +273,10 @@ class DatabaseService {
                 labelData.label,
                 labelData.confidence,
                 labelData.notes || null,
-                labelData.labeler_id || 'default_expert',
-                labelData.store_id || 'default_store',
-                labelData.device_id || 'default_device',
+                labelData.labeler_id || null,  // 레거시 지원
+                labelData.labeler_user_id || null,  // 새로운 방식
+                labelData.store_id || null,
+                labelData.device_id || null,
                 JSON.stringify(labelData.metadata || {})
             ];
 
@@ -528,6 +559,110 @@ class DatabaseService {
                 'UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = $1',
                 [userId]
             );
+        } finally {
+            client.release();
+        }
+    }
+
+    // ===== 세션 관리 메서드들 (connect-pg-simple 호환) =====
+    
+    async createSession(sessionId, userId, expiresAt, ipAddress = null, userAgent = null) {
+        const client = await this.pool.connect();
+        try {
+            // users 테이블에서 사용자 정보 조회
+            const userResult = await client.query(
+                'SELECT id, username, email, role, roles FROM users WHERE id = $1',
+                [userId]
+            );
+            
+            if (userResult.rows.length === 0) {
+                throw new Error('User not found');
+            }
+            
+            const user = userResult.rows[0];
+            
+            // sess 데이터 구성 (connect-pg-simple 형식)
+            const sessData = {
+                cookie: {
+                    originalMaxAge: 24 * 60 * 60 * 1000, // 24시간
+                    expires: expiresAt,
+                    httpOnly: true,
+                    path: '/'
+                },
+                user: {
+                    id: user.id,
+                    username: user.username,
+                    email: user.email,
+                    role: user.role,
+                    roles: user.roles || [user.role]
+                },
+                user_id: userId,
+                ip_address: ipAddress,
+                user_agent: userAgent
+            };
+            
+            // sessions 테이블에 삽입 (realschema.md 기준)
+            const res = await client.query(
+                `INSERT INTO sessions (sid, sess, expire)
+                 VALUES ($1, $2, $3)
+                 ON CONFLICT (sid) DO UPDATE 
+                 SET sess = EXCLUDED.sess, expire = EXCLUDED.expire
+                 RETURNING *`,
+                [sessionId, JSON.stringify(sessData), expiresAt]
+            );
+            
+            return res.rows[0];
+        } finally {
+            client.release();
+        }
+    }
+    
+    async getSession(sessionId) {
+        const client = await this.pool.connect();
+        try {
+            const res = await client.query(
+                'SELECT * FROM sessions WHERE sid = $1 AND expire > NOW()',
+                [sessionId]
+            );
+            
+            if (res.rows.length === 0) {
+                return null;
+            }
+            
+            const session = res.rows[0];
+            return {
+                sid: session.sid,
+                sess: typeof session.sess === 'string' ? JSON.parse(session.sess) : session.sess,
+                expire: session.expire,
+                user_id: session.sess?.user_id,
+                username: session.sess?.user?.username,
+                role: session.sess?.user?.role,
+                roles: session.sess?.user?.roles
+            };
+        } finally {
+            client.release();
+        }
+    }
+    
+    async deleteSession(sessionId) {
+        const client = await this.pool.connect();
+        try {
+            await client.query(
+                'DELETE FROM sessions WHERE sid = $1',
+                [sessionId]
+            );
+        } finally {
+            client.release();
+        }
+    }
+    
+    async cleanupExpiredSessions() {
+        const client = await this.pool.connect();
+        try {
+            const result = await client.query(
+                'DELETE FROM sessions WHERE expire < NOW()'
+            );
+            console.log(`🧹 만료된 세션 ${result.rowCount}개 정리됨`);
         } finally {
             client.release();
         }

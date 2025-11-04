@@ -1,9 +1,9 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
-const SQLiteDatabaseService = require('../../services/sqlite_database_service');
+const DatabaseService = require('../../services/database_service');
 
 const router = express.Router();
-const db = new SQLiteDatabaseService();
+const db = new DatabaseService();
 
 // 회원가입 (4단계 지원)
 router.post('/register', async (req, res) => {
@@ -121,11 +121,13 @@ router.post('/register', async (req, res) => {
 
         const newUser = await db.createUser(userData);
 
-        // 세션 생성
+        // 세션 생성 (IP와 User-Agent 포함)
         const sessionId = generateSessionId();
         const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24시간
+        const ipAddress = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+        const userAgent = req.headers['user-agent'];
         
-        await db.createSession(sessionId, newUser.id, expiresAt);
+        await db.createSession(sessionId, newUser.id, expiresAt, ipAddress, userAgent);
 
         // 세션 쿠키 설정
         res.cookie('sessionId', sessionId, {
@@ -194,11 +196,13 @@ router.post('/login', async (req, res) => {
         // 마지막 로그인 시간 업데이트
         await db.updateUserLastLogin(user.id);
 
-        // 세션 생성
+        // 세션 생성 (IP와 User-Agent 포함)
         const sessionId = generateSessionId();
         const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24시간
+        const ipAddress = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+        const userAgent = req.headers['user-agent'];
         
-        await db.createSession(sessionId, user.id, expiresAt);
+        await db.createSession(sessionId, user.id, expiresAt, ipAddress, userAgent);
 
         // 세션 쿠키 설정
         res.cookie('sessionId', sessionId, {
@@ -250,10 +254,15 @@ const authenticateSession = async (req, res, next) => {
             });
         }
 
+        // sess 데이터에서 사용자 정보 추출
+        const sessData = session.sess;
+        
         req.user = {
-            userId: session.user_id,
-            username: session.username,
-            role: session.role
+            userId: sessData.user_id || sessData.user?.id,
+            username: sessData.user?.username,
+            email: sessData.user?.email,
+            role: sessData.user?.role,
+            roles: sessData.user?.roles || [sessData.user?.role]
         };
         next();
     } catch (error) {
