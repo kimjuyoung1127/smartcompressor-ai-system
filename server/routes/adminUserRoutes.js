@@ -2,8 +2,12 @@ const express = require('express');
 const router = express.Router();
 const DatabaseService = require('../../services/database_service');
 const { requireAdmin } = require('../middleware/rbac');
+const { authenticateSession } = require('../middleware/auth');
 
 const db = new DatabaseService();
+
+// 모든 라우트에 세션 인증 미들웨어 적용
+router.use(authenticateSession);
 
 // 관리자 전용: 모든 사용자 목록 조회
 router.get('/users', requireAdmin, async (req, res) => {

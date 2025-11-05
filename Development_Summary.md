@@ -113,4 +113,14 @@
 - 모듈 기반 JavaScript 아키텍처
 - RESTful API 통신
 
+## 9. 버그 수정
+
+### 9.1 관리자 대시보드 401 오류 수정
+- **문제:** 관리자 대시보드에서 사용자 목록 조회 API (`/api/admin-users/users`) 호출 시 401 Unauthorized 오류 발생
+- **원인:** `adminUserRoutes.js` 에서 `requireAdmin` 미들웨어 이전에 `authenticateSession` 미들웨어가 없어 사용자 세션 정보(`req.user`)가 설정되지 않음
+- **해결:**
+    - `server/middleware/auth.js` 파일을 생성하여 `authenticateSession` 미들웨어를 분리하고 모듈화
+    - `server/routes/authRoutes.js` 에서 `authenticateSession` 미들웨어를 새로 만든 모듈에서 가져오도록 수정
+    - `server/routes/adminUserRoutes.js` 의 모든 라우트에 `authenticateSession` 미들웨어를 추가하여, `requireAdmin` 미들웨어가 실행되기 전에 사용자 세션이 먼저 검증되도록 수정
+
 이 문서는 SignalCraft의 인증 시스템 및 관리자 기능 개선 작업을 정리한 것입니다. 모든 기능은 보안과 사용자 경험을 고려하여 설계 및 구현되었습니다.
