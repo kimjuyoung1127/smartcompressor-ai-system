@@ -13,6 +13,8 @@ const { ProfilingIntegration } = require("@sentry/profiling-node");
 const authRoutes = require('./routes/authRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const adminUserRoutes = require('./routes/adminUserRoutes');
+const adminInviteRoutes = require('./routes/adminInviteRoutes');
 const kakaoRoutes = require('./routes/kakaoRoutes');
 const monitoringRoutes = require('./routes/monitoringRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
@@ -154,11 +156,13 @@ app.get('/storage/dashboard', (req, res) => {
 
 
 // Customer Dashboard Route
-
 app.get('/dashboard', (req, res) => {
-
     res.sendFile(path.join(__dirname, '../templates/customer/dashboard.html'));
+});
 
+// Admin Dashboard Route
+app.get('/admin-panel', [verifySession, ensureAdmin], (req, res) => {
+    res.sendFile(path.join(__dirname, '../admin/admin-dashboard.html'));
 });
 
 
@@ -184,6 +188,8 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/weather', weatherRoutes);
 app.use('/api/sensor', sensorDataRoutes);
 app.use('/api/labeling', labelingRoutes); // 라벨링 시스템 (RBAC 적용)
+app.use('/api/admin-users', adminUserRoutes); // 관리자 전용 사용자 관리 API
+app.use('/api/admin-invites', adminInviteRoutes); // 관리자 초대 시스템
 
 // ESP32 API 라우트
 const esp32DashboardApi = require('./routes/esp32DashboardApi');

@@ -44,6 +44,17 @@ class NavbarRenderer {
         if (ctaDiagnosisBtn) ctaDiagnosisBtn.style.display = 'inline-block';
         if (ctaDashboardBtn) ctaDashboardBtn.style.display = 'inline-block';
         
+        // 헤더의 로그인/로그아웃 링크 업데이트
+        const loginLink = document.getElementById('loginLink');
+        const logoutLink = document.getElementById('logoutLink');
+        const mobileLoginLink = document.getElementById('mobileLoginLink');
+        const mobileLogoutLink = document.getElementById('mobileLogoutLink');
+        
+        if (loginLink) loginLink.style.display = 'none';
+        if (logoutLink) logoutLink.style.display = 'inline';
+        if (mobileLoginLink) mobileLoginLink.style.display = 'none';
+        if (mobileLogoutLink) mobileLogoutLink.style.display = 'inline';
+        
         // 사용자 정보 추가 (드롭다운 메뉴로)
         const navbar = document.querySelector('.navbar-nav');
         if (navbar) {
@@ -272,6 +283,17 @@ class NavbarRenderer {
         if (ctaDemoBtn) ctaDemoBtn.style.display = 'inline-block';
         if (ctaDiagnosisBtn) ctaDiagnosisBtn.style.display = 'none';
         if (ctaDashboardBtn) ctaDashboardBtn.style.display = 'none';
+        
+        // 헤더의 로그인/로그아웃 링크 업데이트
+        const loginLink = document.getElementById('loginLink');
+        const logoutLink = document.getElementById('logoutLink');
+        const mobileLoginLink = document.getElementById('mobileLoginLink');
+        const mobileLogoutLink = document.getElementById('mobileLogoutLink');
+        
+        if (loginLink) loginLink.style.display = 'inline';
+        if (logoutLink) logoutLink.style.display = 'none';
+        if (mobileLoginLink) mobileLoginLink.style.display = 'inline';
+        if (mobileLogoutLink) mobileLogoutLink.style.display = 'none';
     }
 }
 

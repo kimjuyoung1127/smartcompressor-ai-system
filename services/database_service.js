@@ -53,6 +53,50 @@ class DatabaseService {
         } catch (error) {
             console.error('❌ 데이터베이스 초기화 실패:', error.message);
         }
+
+        // 세션 테이블이 있는지 확인하고 없으면 생성
+        await this.ensureSessionTableExists();
+    }
+
+    // 세션 테이블이 존재하는지 확인하고 없으면 생성하는 메서드
+    async ensureSessionTableExists() {
+        const client = await this.pool.connect();
+        try {
+            // 'sessions' 테이블이 존재하는지 확인
+            const result = await client.query(`
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_schema = 'public' 
+                    AND table_name = 'sessions'
+                ) AS table_exists
+            `);
+            
+            const tableExists = result.rows[0].table_exists;
+            
+            if (!tableExists) {
+                console.log('🔧 세션 테이블이 존재하지 않아 생성합니다.');
+                await client.query(`
+                    CREATE TABLE sessions (
+                        sid VARCHAR(255) PRIMARY KEY,
+                        sess JSONB NOT NULL,
+                        expire TIMESTAMPTZ NOT NULL
+                    )
+                `);
+                
+                // 세션 만료를 위한 인덱스 생성
+                await client.query(`
+                    CREATE INDEX idx_session_expire ON sessions(expire);
+                `);
+                
+                console.log('✅ 세션 테이블 생성 완료');
+            } else {
+                console.log('✅ 세션 테이블이 이미 존재합니다.');
+            }
+        } catch (error) {
+            console.error('❌ 세션 테이블 생성 중 오류:', error.message);
+        } finally {
+            client.release();
+        }
     }
 
     async createTables() {
@@ -240,6 +284,20 @@ class DatabaseService {
                     BEFORE UPDATE ON labels
                     FOR EACH ROW
                     EXECUTE FUNCTION update_updated_at_column();
+            `);
+
+            // sessions 테이블 (connect-pg-simple용 세션 저장 테이블)
+            await client.query(`
+                CREATE TABLE IF NOT EXISTS sessions (
+                    sid VARCHAR(255) PRIMARY KEY,
+                    sess JSONB NOT NULL,
+                    expire TIMESTAMPTZ NOT NULL
+                )
+            `);
+
+            // 세션 만료를 위한 인덱스
+            await client.query(`
+                CREATE INDEX IF NOT EXISTS idx_session_expire ON sessions(expire);
             `);
 
         } finally {
@@ -571,7 +629,7 @@ class DatabaseService {
         try {
             // users 테이블에서 사용자 정보 조회
             const userResult = await client.query(
-                'SELECT id, username, email, role, roles FROM users WHERE id = $1',
+                'SELECT id, username, email, role FROM users WHERE id = $1',
                 [userId]
             );
             
@@ -594,7 +652,7 @@ class DatabaseService {
                     username: user.username,
                     email: user.email,
                     role: user.role,
-                    roles: user.roles || [user.role]
+                    roles: [user.role]  // Create roles array from the single role field
                 },
                 user_id: userId,
                 ip_address: ipAddress,
@@ -630,14 +688,52 @@ class DatabaseService {
             }
             
             const session = res.rows[0];
+            const sessData = typeof session.sess === 'string' ? JSON.parse(session.sess) : session.sess;
+            
+            // 사용자 정보가 오래되었을 수 있으므로, 실제 DB에서 최신 사용자 정보 불러오기
+            const userId = sessData.user_id || sessData.user?.id;
+            if (userId) {
+                try {
+                    // DB에서 최신 사용자 정보 가져오기
+                    const userRes = await client.query(
+                        'SELECT id, username, email, role FROM users WHERE id = $1',
+                        [userId]
+                    );
+                    
+                    if (userRes.rows.length > 0) {
+                        const dbUser = userRes.rows[0];
+                        
+                        // 세션 데이터의 사용자 정보를 최신 DB 정보로 업데이트
+                        if (sessData.user) {
+                            sessData.user.username = dbUser.username;
+                            sessData.user.email = dbUser.email;
+                            sessData.user.role = dbUser.role;
+                            sessData.user.roles = [dbUser.role]; // roles 배열도 최신 정보로 업데이트
+                        } else {
+                            // 만약 user 객체가 없으면 생성
+                            sessData.user = {
+                                id: dbUser.id,
+                                username: dbUser.username,
+                                email: dbUser.email,
+                                role: dbUser.role,
+                                roles: [dbUser.role]
+                            };
+                        }
+                    }
+                } catch (userFetchError) {
+                    console.error('사용자 정보 갱신 중 오류:', userFetchError);
+                    // 오류가 발생해도 원래 세션 데이터 사용
+                }
+            }
+            
             return {
                 sid: session.sid,
-                sess: typeof session.sess === 'string' ? JSON.parse(session.sess) : session.sess,
+                sess: sessData,
                 expire: session.expire,
-                user_id: session.sess?.user_id,
-                username: session.sess?.user?.username,
-                role: session.sess?.user?.role,
-                roles: session.sess?.user?.roles
+                user_id: sessData.user_id || sessData.user?.id,
+                username: sessData.user?.username,
+                role: sessData.user?.role,
+                roles: sessData.user?.roles
             };
         } finally {
             client.release();
@@ -790,6 +886,60 @@ class DatabaseService {
     // 데이터베이스 연결 종료
     async close() {
         await this.pool.end();
+    }
+
+    // ===== 관리자용 사용자 관리 메서드들 =====
+    
+    // 사용자 ID로 사용자 정보 조회
+    async getUserById(userId) {
+        const client = await this.pool.connect();
+        try {
+            const result = await client.query('SELECT * FROM users WHERE id = $1', [userId]);
+            return result.rows[0];
+        } finally {
+            client.release();
+        }
+    }
+
+    // 사용자 역할 변경
+    async updateUserRole(userId, newRole) {
+        const client = await this.pool.connect();
+        try {
+            const result = await client.query(
+                'UPDATE users SET role = $1 WHERE id = $2 RETURNING *',
+                [newRole, userId]
+            );
+            return result.rows[0];
+        } finally {
+            client.release();
+        }
+    }
+
+    // 사용자 계정 상태 변경
+    async updateUserStatus(userId, isActive) {
+        const client = await this.pool.connect();
+        try {
+            const result = await client.query(
+                'UPDATE users SET is_active = $1 WHERE id = $2 RETURNING *',
+                [isActive, userId]
+            );
+            return result.rows[0];
+        } finally {
+            client.release();
+        }
+    }
+
+    // 모든 사용자 목록 조회
+    async getAllUsers() {
+        const client = await this.pool.connect();
+        try {
+            const result = await client.query(
+                'SELECT id, username, email, role, is_active, created_at, last_login FROM users ORDER BY created_at DESC'
+            );
+            return result.rows;
+        } finally {
+            client.release();
+        }
     }
 }
 

@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SignalCraft 관리자 대시보드</title>
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link href="/static/css/dashboard_v3.css?v=3.0" rel="stylesheet">
+    
+    <style>
+        :root {
+            --admin-primary: #6B46C1;
+            --admin-secondary: #38B2AC;
+        }
+        
+        .admin-sidebar {
+            width: 260px;
+            background-color: var(--sidebar-bg);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem;
+            border-right: 1px solid var(--border-color);
+            z-index: 1000;
+        }
+        
+        .admin-main-content {
+            margin-left: calc(260px + 1.5rem);
+            width: calc(100% - (260px + 1.5rem));
+            padding: 1.5rem 2rem;
+        }
+        
+        .admin-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            padding: 1.8rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1.5rem;
+        }
+        
+        .user-management-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .user-management-table th,
+        .user-management-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .role-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.375rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .role-admin { background-color: rgba(107, 70, 193, 0.15); color: #6B46C1; }
+        .role-user { background-color: rgba(72, 187, 120, 0.15); color: var(--success); }
+        .role-labeler { background-color: rgba(237, 137, 54, 0.15); color: var(--warning); }
+        .role-owner { background-color: rgba(56, 178, 172, 0.15); color: var(--accent-secondary); }
+        
+        .status-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.375rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .status-active { background-color: rgba(72, 187, 120, 0.15); color: var(--success); }
+        .status-inactive { background-color: rgba(160, 174, 192, 0.15); color: var(--text-secondary); }
+        
+        .admin-nav-link {
+            display: flex;
+            align-items: center;
+            padding: 0.85rem 1rem;
+            border-radius: 0.5rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            margin: 0.15rem 0;
+            text-decoration: none;
+        }
+        
+        .admin-nav-link:hover {
+            background-color: rgba(138, 92, 254, 0.1);
+            color: #FFFFFF;
+            transform: translateX(5px);
+        }
+        
+        .admin-nav-link.active {
+            background-color: rgba(138, 92, 254, 0.2);
+            color: #FFFFFF;
+            font-weight: 700;
+        }
+        
+        .admin-nav-link i {
+            margin-right: 1rem;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .action-buttons .btn {
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        @media (max-width: 768px) {
+            .admin-sidebar {
+                position: fixed;
+                top: 0;
+                left: -260px;
+                width: 260px;
+                height: 100vh;
+                z-index: 1000;
+                transition: left 0.3s ease;
+                box-shadow: 3px 0 10px rgba(0, 0, 0, 0.1);
+            }
+            
+            .admin-sidebar.active {
+                left: 0;
+            }
+            
+            .admin-main-content {
+                margin-left: 0;
+                padding: 1rem;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Hamburger Menu Button (Visible on Mobile) -->
+    <button class="hamburger-menu" id="admin-hamburger-menu">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Admin Sidebar -->
+    <aside class="admin-sidebar" id="admin-sidebar">
+        <div class="sidebar-header mb-4">
+            <h4 class="text-light">
+                <i class="fas fa-shield-alt me-2"></i>Admin
+            </h4>
+        </div>
+        
+        <nav class="flex-column">
+            <a href="#" class="admin-nav-link active" data-section="dashboard">
+                <i class="fas fa-tachometer-alt"></i> <span>대시보드</span>
+            </a>
+            <a href="#" class="admin-nav-link" data-section="users">
+                <i class="fas fa-users"></i> <span>사용자 관리</span>
+            </a>
+            <a href="#" class="admin-nav-link" data-section="invites">
+                <i class="fas fa-paper-plane"></i> <span>초대 관리</span>
+            </a>
+            <a href="#" class="admin-nav-link" data-section="system">
+                <i class="fas fa-cogs"></i> <span>시스템 설정</span>
+            </a>
+            <a href="/" class="admin-nav-link text-danger">
+                <i class="fas fa-arrow-left"></i> <span>메인으로</span>
+            </a>
+        </nav>
+        
+        <div class="mt-auto">
+            <button class="btn btn-danger w-100" id="logoutBtn">
+                <i class="fas fa-sign-out-alt me-2"></i>로그아웃
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-main-content" id="admin-main-content">
+        <!-- Dashboard Section -->
+        <section id="dashboard-section" class="active-section">
+            <header class="page-header">
+                <div class="header-left">
+                    <h1>관리자 대시보드</h1>
+                    <p>시스템 관리 및 사용자 관리</p>
+                </div>
+                <div class="header-right">
+                    <div class="search-bar">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="관리 검색...">
+                    </div>
+                    <button class="icon-button"><i class="fas fa-comment-dots"></i></button>
+                    <button class="icon-button"><i class="fas fa-bell"></i></button>
+                </div>
+            </header>
+
+            <div class="row">
+                <div class="col-md-3 mb-4">
+                    <div class="admin-card">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <p class="text-secondary mb-1">총 사용자 수</p>
+                                <h3 id="totalUsers">0</h3>
+                            </div>
+                            <div class="bg-primary bg-opacity-10 rounded-circle p-3">
+                                <i class="fas fa-users text-primary" style="font-size: 1.5rem;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <div class="admin-card">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <p class="text-secondary mb-1">활성 사용자</p>
+                                <h3 id="activeUsers">0</h3>
+                            </div>
+                            <div class="bg-success bg-opacity-10 rounded-circle p-3">
+                                <i class="fas fa-user-check text-success" style="font-size: 1.5rem;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <div class="admin-card">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <p class="text-secondary mb-1">관리자 수</p>
+                                <h3 id="adminUsers">0</h3>
+                            </div>
+                            <div class="bg-warning bg-opacity-10 rounded-circle p-3">
+                                <i class="fas fa-user-shield text-warning" style="font-size: 1.5rem;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <div class="admin-card">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <p class="text-secondary mb-1">오늘 가입</p>
+                                <h3 id="todayUsers">0</h3>
+                            </div>
+                            <div class="bg-info bg-opacity-10 rounded-circle p-3">
+                                <i class="fas fa-calendar-day text-info" style="font-size: 1.5rem;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- User Management Section -->
+        <section id="users-section" class="inactive-section" style="display: none;">
+            <header class="page-header">
+                <div class="header-left">
+                    <h1>사용자 관리</h1>
+                    <p>사용자 목록 및 권한 관리</p>
+                </div>
+                <div class="header-right">
+                    <button class="btn btn-primary" id="createUserBtn">
+                        <i class="fas fa-user-plus me-2"></i>사용자 생성
+                    </button>
+                    <button class="btn btn-outline-primary ms-2" id="inviteUserBtn">
+                        <i class="fas fa-paper-plane me-2"></i>초대 생성
+                    </button>
+                </div>
+            </header>
+
+            <div class="admin-card">
+                <div class="table-responsive">
+                    <table class="user-management-table">
+                        <thead>
+                            <tr>
+                                <th>사용자</th>
+                                <th>이메일</th>
+                                <th>역할</th>
+                                <th>상태</th>
+                                <th>가입일</th>
+                                <th>최근 로그인</th>
+                                <th>작업</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                            <!-- 사용자 목록이 여기에 표시됩니다 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Invite Management Section -->
+        <section id="invites-section" class="inactive-section" style="display: none;">
+            <header class="page-header">
+                <div class="header-left">
+                    <h1>초대 관리</h1>
+                    <p>관리자 초대 링크 관리</p>
+                </div>
+                <div class="header-right">
+                    <button class="btn btn-primary" id="createInviteBtn">
+                        <i class="fas fa-plus me-2"></i>초대 생성
+                    </button>
+                </div>
+            </header>
+
+            <div class="admin-card">
+                <div class="table-responsive">
+                    <table class="user-management-table">
+                        <thead>
+                            <tr>
+                                <th>이메일</th>
+                                <th>사용자명</th>
+                                <th>역할</th>
+                                <th>생성자</th>
+                                <th>만료일</th>
+                                <th>상태</th>
+                                <th>작업</th>
+                            </tr>
+                        </thead>
+                        <tbody id="invitesTableBody">
+                            <!-- 초대 목록이 여기에 표시됩니다 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- User Role Update Modal -->
+    <div class="modal fade" id="userRoleModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content bg-dark text-light">
+                <div class="modal-header">
+                    <h5 class="modal-title">역할 변경</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="roleUpdateForm">
+                        <input type="hidden" id="userIdToUpdate">
+                        <div class="mb-3">
+                            <label class="form-label">사용자명</label>
+                            <input type="text" class="form-control bg-dark text-light" id="userToUpdate" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">이메일</label>
+                            <input type="email" class="form-control bg-dark text-light" id="emailToUpdate" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">현재 역할</label>
+                            <input type="text" class="form-control bg-dark text-light" id="currentRole" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">변경할 역할</label>
+                            <select class="form-select bg-dark text-light" id="newRole">
+                                <option value="user">사용자 (user)</option>
+                                <option value="labeler">라벨러 (labeler)</option>
+                                <option value="owner">점주 (owner)</option>
+                                <option value="admin">관리자 (admin)</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" id="confirmRoleUpdate">변경</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Status Update Modal -->
+    <div class="modal fade" id="userStatusModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content bg-dark text-light">
+                <div class="modal-header">
+                    <h5 class="modal-title">계정 상태 변경</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>사용자 <strong id="statusUserName"></strong>의 계정 상태를 변경하시겠습니까?</p>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="statusRadio" id="activateRadio" value="true">
+                        <label class="form-check-label" for="activateRadio">활성화</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="statusRadio" id="deactivateRadio" value="false">
+                        <label class="form-check-label" for="deactivateRadio">비활성화</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" id="confirmStatusUpdate">변경</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invite Creation Modal -->
+    <div class="modal fade" id="inviteModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content bg-dark text-light">
+                <div class="modal-header">
+                    <h5 class="modal-title">관리자 초대 생성</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="inviteForm">
+                        <div class="mb-3">
+                            <label class="form-label">이메일</label>
+                            <input type="email" class="form-control bg-dark text-light" id="inviteEmail" placeholder="초대할 이메일 주소" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">사용자명</label>
+                            <input type="text" class="form-control bg-dark text-light" id="inviteUsername" placeholder="사용자명" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">이름</label>
+                            <input type="text" class="form-control bg-dark text-light" id="inviteFullName" placeholder="전체 이름">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">역할</label>
+                            <select class="form-select bg-dark text-light" id="inviteRole">
+                                <option value="admin">관리자 (admin)</option>
+                                <option value="user">사용자 (user)</option>
+                                <option value="labeler">라벨러 (labeler)</option>
+                                <option value="owner">점주 (owner)</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" id="confirmInvite">초대 생성</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Admin Dashboard JavaScript -->
+    <script>
+        // 전역 변수
+        let currentUser = null;
+        let allUsers = [];
+        let allInvites = [];
+
+        // API 기본 URL
+        const API_BASE_URL = window.location.origin;
+        
+        // 세션 확인
+        async function checkSession() {
+            try {
+                console.log('세션 확인 시작 - API 호출 전');
+                const response = await fetch('/api/auth/verify', {
+                    credentials: 'include'  // 쿠키 포함
+                });
+                console.log('세션 확인 API 응답 상태:', response.status);
+                
+                if (response.status === 401) {
+                    console.error('401 인증 오류 발생 - 유효하지 않은 세션');
+                    window.location.href = '/';
+                    return;
+                }
+                
+                const data = await response.json();
+                console.log('세션 확인 응답 데이터:', data);
+                
+                if (!data.success || !data.user) {
+                    console.error('세션 확인 실패 - 사용자 정보 없음:', data);
+                    // 관리자 권한이 없으면 메인 페이지로 리디렉션
+                    window.location.href = '/';
+                    return;
+                }
+                
+                // 사용자 정보 저장
+                currentUser = data.user;
+                
+                // UI 업데이트
+                document.title = `SignalCraft 관리자 대시보드 - ${data.user.username}`;
+                
+            } catch (error) {
+                console.error('세션 확인 오류:', error);
+                window.location.href = '/';
+            }
+        }
+
+        // 사용자 목록 불러오기
+        async function loadUsers() {
+            try {
+                console.log('사용자 목록 불러오기 시도 - API 호출 전');
+                const response = await fetch('/api/admin-users/users', {
+                    credentials: 'include'  // 쿠키 포함
+                });
+                console.log('API 응답 수신:', response.status);
+                const data = await response.json();
+                console.log('API 응답 데이터:', data);
+                
+                if (response.status === 401) {
+                    console.error('401 인증 오류 발생 - 세션 또는 권한 문제');
+                    alert('권한이 없거나 세션이 만료되었습니다. 다시 로그인해주세요.');
+                    window.location.href = '/';
+                    return;
+                }
+                
+                if (data.success) {
+                    allUsers = data.users;
+                    displayUsers();
+                    updateDashboardStats();
+                } else {
+                    showError('사용자 목록을 불러오는데 실패했습니다: ' + data.message);
+                }
+            } catch (error) {
+                console.error('사용자 목록 불러오기 오류:', error);
+                showError('사용자 목록을 불러오는데 오류가 발생했습니다.');
+            }
+        }
+
+        // 사용자 목록 표시
+        function displayUsers() {
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = '';
+            
+            allUsers.forEach(user => {
+                const row = document.createElement('tr');
+                
+                // 역할에 따라 배지 클래스 결정
+                let roleClass = 'role-user';
+                switch (user.role) {
+                    case 'admin': roleClass = 'role-admin'; break;
+                    case 'labeler': roleClass = 'role-labeler'; break;
+                    case 'owner': roleClass = 'role-owner'; break;
+                    case 'user': roleClass = 'role-user'; break;
+                }
+                
+                // 상태에 따라 배지 클래스 결정
+                const statusClass = user.is_active ? 'status-active' : 'status-inactive';
+                const statusText = user.is_active ? '활성' : '비활성';
+                
+                // 마지막 로그인 날짜 포맷
+                const lastLogin = user.last_login ? new Date(user.last_login).toLocaleString() : '없음';
+                
+                row.innerHTML = `
+                    <td>${user.username}</td>
+                    <td>${user.email}</td>
+                    <td><span class="role-badge ${roleClass}">${user.role}</span></td>
+                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                    <td>${new Date(user.created_at).toLocaleDateString()}</td>
+                    <td>${lastLogin}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-sm btn-outline-primary" onclick="openRoleModal(${user.id}, '${user.username}', '${user.email}', '${user.role}')">
+                                <i class="fas fa-user-tag"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="openStatusModal(${user.id}, '${user.username}', ${user.is_active})">
+                                <i class="fas fa-power-off"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-info" onclick="viewUserDetails(${user.id})">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        // 초대 목록 불러오기
+        async function loadInvites() {
+            try {
+                const response = await fetch('/api/admin-invites/invites', {
+                    credentials: 'include'  // 쿠키 포함
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    allInvites = data.invites;
+                    displayInvites();
+                } else {
+                    showError('초대 목록을 불러오는데 실패했습니다: ' + data.message);
+                }
+            } catch (error) {
+                console.error('초대 목록 불러오기 오류:', error);
+                showError('초대 목록을 불러오는데 오류가 발생했습니다.');
+            }
+        }
+
+        // 초대 목록 표시
+        function displayInvites() {
+            const tbody = document.getElementById('invitesTableBody');
+            tbody.innerHTML = '';
+            
+            allInvites.forEach(invite => {
+                // 상태 확인
+                const isUsed = invite.is_used;
+                const isExpired = new Date(invite.expiry) < new Date();
+                const status = isUsed ? '사용됨' : (isExpired ? '만료됨' : '유효');
+                const statusClass = isUsed ? 'status-inactive' : (isExpired ? 'status-inactive' : 'status-active');
+                
+                // 역할에 따라 배지 클래스 결정
+                let roleClass = 'role-user';
+                switch (invite.role) {
+                    case 'admin': roleClass = 'role-admin'; break;
+                    case 'labeler': roleClass = 'role-labeler'; break;
+                    case 'owner': roleClass = 'role-owner'; break;
+                    case 'user': roleClass = 'role-user'; break;
+                }
+                
+                // 만료일 포맷
+                const expiry = new Date(invite.expiry).toLocaleString();
+                
+                // 생성자 이름이 없을 경우 처리
+                const createdBy = invite.created_by_username || '알 수 없음';
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${invite.email}</td>
+                    <td>${invite.username}</td>
+                    <td><span class="role-badge ${roleClass}">${invite.role}</span></td>
+                    <td>${createdBy}</td>
+                    <td>${expiry}</td>
+                    <td><span class="status-badge ${statusClass}">${status}</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-sm btn-outline-info" onclick="copyInviteLink('${invite.invite_token}')">
+                                <i class="fas fa-link"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        // 대시보드 통계 업데이트
+        function updateDashboardStats() {
+            document.getElementById('totalUsers').textContent = allUsers.length;
+            
+            const activeUsers = allUsers.filter(u => u.is_active).length;
+            document.getElementById('activeUsers').textContent = activeUsers;
+            
+            const adminUsers = allUsers.filter(u => u.role === 'admin').length;
+            document.getElementById('adminUsers').textContent = adminUsers;
+            
+            // 오늘 가입한 사용자 수 계산
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const todayUsers = allUsers.filter(u => {
+                const userCreated = new Date(u.created_at);
+                userCreated.setHours(0, 0, 0, 0);
+                return userCreated.getTime() === today.getTime();
+            }).length;
+            document.getElementById('todayUsers').textContent = todayUsers;
+        }
+
+        // 역할 변경 모달 열기
+        function openRoleModal(userId, username, email, currentRole) {
+            document.getElementById('userIdToUpdate').value = userId;
+            document.getElementById('userToUpdate').value = username;
+            document.getElementById('emailToUpdate').value = email;
+            document.getElementById('currentRole').value = currentRole;
+            document.getElementById('newRole').value = currentRole;
+            
+            const modal = new bootstrap.Modal(document.getElementById('userRoleModal'));
+            modal.show();
+        }
+
+        // 상태 변경 모달 열기
+        function openStatusModal(userId, username, isActive) {
+            document.getElementById('statusUserName').textContent = username;
+            
+            // 라디오 버튼 선택 상태 설정
+            if (isActive) {
+                document.getElementById('deactivateRadio').checked = true;
+            } else {
+                document.getElementById('activateRadio').checked = true;
+            }
+            
+            // 숨김 입력 필드에 사용자 ID 저장
+            document.getElementById('statusUserId').value = userId;
+            
+            const modal = new bootstrap.Modal(document.getElementById('userStatusModal'));
+            modal.show();
+        }
+
+        // 사용자 상세 보기
+        async function viewUserDetails(userId) {
+            try {
+                console.log(`사용자 상세 정보 불러오기 시도 - ID: ${userId}`);
+                const response = await fetch(`/api/admin-users/users/${userId}`, {
+                    credentials: 'include'  // 쿠키 포함
+                });
+                console.log('사용자 상세 정보 API 응답 상태:', response.status);
+                const data = await response.json();
+                console.log('사용자 상세 정보 응답 데이터:', data);
+                
+                if (data.success) {
+                    alert('사용자 정보: ' + JSON.stringify(data.user, null, 2));
+                } else {
+                    showError('사용자 정보를 불러오는데 실패했습니다: ' + data.message);
+                }
+            } catch (error) {
+                console.error('사용자 정보 불러오기 오류:', error);
+                showError('사용자 정보를 불러오는데 오류가 발생했습니다.');
+            }
+        }
+
+        // 초대 링크 복사
+        function copyInviteLink(token) {
+            const inviteUrl = `${window.location.origin}/register-admin?token=${token}`;
+            navigator.clipboard.writeText(inviteUrl).then(() => {
+                alert('초대 링크가 복사되었습니다: ' + inviteUrl);
+            }).catch(err => {
+                console.error('링크 복사 실패:', err);
+                // 폴백으로 prompt 사용
+                prompt('초대 링크를 복사하세요:', inviteUrl);
+            });
+        }
+
+        // 섹션 전환
+        function showSection(sectionId) {
+            // 모든 섹션 숨기기
+            document.querySelectorAll('.active-section, .inactive-section').forEach(el => {
+                el.style.display = 'none';
+            });
+            
+            // 선택한 섹션 보이기
+            document.getElementById(`${sectionId}-section`).style.display = 'block';
+            
+            // 네비게이션 링크 활성화 상태 업데이트
+            document.querySelectorAll('.admin-nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // 클릭한 링크에 활성 클래스 추가
+            document.querySelector(`[data-section="${sectionId}"]`).classList.add('active');
+            
+            // 해당 섹션에 맞는 데이터 불러오기
+            switch(sectionId) {
+                case 'users':
+                    loadUsers();
+                    break;
+                case 'invites':
+                    loadInvites();
+                    break;
+                case 'dashboard':
+                    loadUsers(); // 대시보드 통계를 위해 사용자 데이터 필요
+                    break;
+            }
+        }
+
+        // 에러 표시
+        function showError(message) {
+            alert(message);
+        }
+
+        // 이벤트 리스너 설정
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 세션 확인
+            await checkSession();
+            
+            // 사이드바 네비게이션 클릭 이벤트
+            document.querySelectorAll('[data-section]').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const sectionId = this.getAttribute('data-section');
+                    showSection(sectionId);
+                });
+            });
+            
+            // 로그아웃 버튼
+            document.getElementById('logoutBtn').addEventListener('click', function() {
+                if (confirm('정말로 로그아웃 하시겠습니까?')) {
+                    fetch('/api/auth/logout', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            window.location.href = '/';
+                        } else {
+                            alert('로그아웃에 실패했습니다.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('로그아웃 오류:', error);
+                        alert('로그아웃 중 오류가 발생했습니다.');
+                        window.location.href = '/';
+                    });
+                }
+            });
+            
+            // 역할 변경 확인 버튼
+            document.getElementById('confirmRoleUpdate').addEventListener('click', async function() {
+                const userId = document.getElementById('userIdToUpdate').value;
+                const newRole = document.getElementById('newRole').value;
+                
+                try {
+                    console.log(`사용자 역할 변경 시도 - ID: ${userId}, 역할: ${newRole}`);
+                    const response = await fetch(`/api/admin-users/users/${userId}/role`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        credentials: 'include',  // 쿠키 포함
+                        body: JSON.stringify({ role: newRole })
+                    });
+                    console.log('역할 변경 API 응답 상태:', response.status);
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        alert(data.message);
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('userRoleModal'));
+                        modal.hide();
+                        loadUsers(); // 사용자 목록 다시 불러오기
+                    } else {
+                        alert('역할 변경에 실패했습니다: ' + data.message);
+                    }
+                } catch (error) {
+                    console.error('역할 변경 오류:', error);
+                    alert('역할 변경 중 오류가 발생했습니다.');
+                }
+            });
+            
+            // 상태 변경 확인 버튼
+            document.getElementById('confirmStatusUpdate').addEventListener('click', async function() {
+                // 현재 페이지에 상태 변경에 필요한 사용자 ID가 없어서 함수를 완성하기 전에 확인
+                const selectedStatus = document.querySelector('input[name="statusRadio"]:checked');
+                if (!selectedStatus) {
+                    alert('상태를 선택해주세요.');
+                    return;
+                }
+                
+                const userId = document.querySelector('#statusUserId')?.value; // 이 필드를 먼저 생성해야 함
+                const isActive = selectedStatus.value === 'true';
+                
+                try {
+                    console.log(`사용자 상태 변경 시도 - ID: ${userId}, 상태: ${isActive}`);
+                    const response = await fetch(`/api/admin-users/users/${userId}/status`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        credentials: 'include',  // 쿠키 포함
+                        body: JSON.stringify({ isActive: isActive })
+                    });
+                    console.log('상태 변경 API 응답 상태:', response.status);
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        alert(data.message);
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('userStatusModal'));
+                        modal.hide();
+                        loadUsers(); // 사용자 목록 다시 불러오기
+                    } else {
+                        alert('상태 변경에 실패했습니다: ' + data.message);
+                    }
+                } catch (error) {
+                    console.error('상태 변경 오류:', error);
+                    alert('상태 변경 중 오류가 발생했습니다.');
+                }
+            });
+            
+            // 초대 생성 버튼
+            document.getElementById('createInviteBtn').addEventListener('click', function() {
+                const modal = new bootstrap.Modal(document.getElementById('inviteModal'));
+                modal.show();
+            });
+            
+            // 초대 생성 확인 버튼
+            document.getElementById('confirmInvite').addEventListener('click', async function() {
+                const email = document.getElementById('inviteEmail').value;
+                const username = document.getElementById('inviteUsername').value;
+                const fullName = document.getElementById('inviteFullName').value;
+                const role = document.getElementById('inviteRole').value;
+                
+                try {
+                    console.log(`관리자 초대 생성 시도 - 이메일: ${email}, 사용자명: ${username}, 역할: ${role}`);
+                    const response = await fetch('/api/admin-invites/invite-admin', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        credentials: 'include',  // 쿠키 포함
+                        body: JSON.stringify({ email, username, fullName, role })
+                    });
+                    console.log('초대 생성 API 응답 상태:', response.status);
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        alert(`초대가 생성되었습니다. 초대 링크: ${data.invite.inviteUrl}`);
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('inviteModal'));
+                        modal.hide();
+                        
+                        // 폼 초기화
+                        document.getElementById('inviteForm').reset();
+                        
+                        // 초대 목록 다시 불러오기 (if invites section is active)
+                        if (document.getElementById('invites-section').style.display !== 'none') {
+                            loadInvites();
+                        }
+                    } else {
+                        alert('초대 생성에 실패했습니다: ' + data.message);
+                    }
+                } catch (error) {
+                    console.error('초대 생성 오류:', error);
+                    alert('초대 생성 중 오류가 발생했습니다.');
+                }
+            });
+            
+            // 모달에 사용자 ID 필드 추가 (JavaScript로)
+            const statusModal = document.getElementById('userStatusModal');
+            if (!document.getElementById('statusUserId')) {
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.id = 'statusUserId';
+                statusModal.querySelector('.modal-body').prepend(hiddenInput);
+            }
+            
+            // 초기에 대시보드 표시
+            showSection('dashboard');
+        });
+
+        // 모바일 메뉴 토글
+        document.getElementById('admin-hamburger-menu').addEventListener('click', function() {
+            document.getElementById('admin-sidebar').classList.toggle('active');
+        });
+    </script>
+</body>
+</html>
