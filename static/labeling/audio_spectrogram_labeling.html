@@ -1,506 +1,356 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" data-theme="light">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>오디오 스펙트로그램 라벨링 툴</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>오디오 스펙트로그램 라벨링 툴 · UI</title>
 
-    <!-- Font Awesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    
-    <!-- Custom CSS -->
-    <link href="/static/css/dashboard_v3.css?v=3.0" rel="stylesheet">
-    <!-- Mobile Responsive CSS -->
-    <link href="/static/css/dashboard_mobile_responsive.css" rel="stylesheet">
-    
-    <!-- Wavesurfer.js -->
-    <script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.js"></script>
-    
-    <!-- Annotorious -->
-    <link rel="stylesheet" href="https://unpkg.com/@recogito/annotorious@2.3.0/dist/annotorious.min.css">
-    <script src="https://unpkg.com/@recogito/annotorious@2.3.0/dist/annotorious.min.js"></script>
-    
-    <style>
-        /* Custom styles for the labeling tool */
-        .tool-container {
-            display: grid;
-            grid-template-columns: 260px 1fr 260px;
-            height: calc(100vh - 80px);
-            gap: 1.5rem;
-            padding: 1.5rem 0;
-        }
+  <!-- Font Awesome (fix rel typo) -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
 
-        .panel {
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 0.75rem;
-            padding: 1.5rem;
-            overflow: auto;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
+  <!-- App CSS -->
+  <link href="/static/css/labeling/labeling_tool.css" rel="stylesheet" />
+  <link href="/static/css/dashboard_mobile_responsive.css" rel="stylesheet" />
 
-        .left-panel {
-            grid-row: 1;
-            grid-column: 1;
-        }
+  <!-- Annotorious (for overlay UI skin only; logic will be in JS file later) -->
+  <link rel="stylesheet" href="https://unpkg.com/@recogito/annotorious@2.3.0/dist/annotorious.min.css" />
 
-        .center-panel {
-            grid-row: 1;
-            grid-column: 2;
-            display: flex;
-            flex-direction: column;
-        }
+  <style>
+    :root {
+      --card-bg: #111418;
+      --secondary-bg: #0d1014;
+      --border-color: #262b33;
+      --text-primary: #e8eaed;
+      --text-secondary: #9aa0a6;
+      --accent-primary: #8a5cfe;
+      --success: #48bb78;
+      --warning: #ed8936;
+      --danger: #ef4444;
+      --info: #38bdf8;
+      --muted: #2b3038;
+      --chip-bg: #1a1f26;
+    }
 
-        .right-panel {
-            grid-row: 1;
-            grid-column: 3;
-        }
+    [data-theme="light"] {
+      --card-bg: #ffffff;
+      --secondary-bg: #f7f7fb;
+      --border-color: #e5e7eb;
+      --text-primary: #0f172a;
+      --text-secondary: #667085;
+      --chip-bg: #f1f5f9;
+    }
 
-        .spectrogram-container {
-            position: relative;
-            width: 100%;
-            height: 300px;
-            margin-bottom: 1rem;
-            background-color: #000;
-            border-radius: 0.5rem;
-            overflow: hidden;
-        }
+    body { background: var(--secondary-bg); color: var(--text-primary); }
 
-        .spectrogram-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
+    /* ---------- Layout ---------- */
+    .tool-container {
+      display: grid;
+      grid-template-columns: 280px 1fr 320px;
+      gap: 1.25rem;
+      padding: 1.25rem 0 2rem;
+      min-height: calc(100vh - 92px);
+    }
 
-        .cursor-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-        }
+    .panel {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px;
+      overflow: auto;
+      box-shadow: 0 2px 10px rgba(0,0,0,.12);
+    }
 
-        .vertical-cursor {
-            position: absolute;
-            top: 0;
-            height: 100%;
-            width: 2px;
-            background-color: rgba(255, 0, 0, 0.8);
-            z-index: 10;
-        }
+    .left-panel { display:flex; flex-direction:column; }
+    .center-panel { display:flex; flex-direction:column; gap:12px; }
+    .right-panel { display:flex; flex-direction:column; }
 
-        .waveform-container {
-            height: 150px;
-            margin-bottom: 1rem;
-        }
+    .page-header { display:flex; align-items:center; justify-content:space-between; gap:16px; }
+    .header-left h1 { margin: 0 0 6px; font-size: 20px; }
+    .metric-badges { display:flex; gap:8px; flex-wrap:wrap; }
+    .metric { background: var(--chip-bg); border:1px solid var(--border-color); border-radius:999px; padding:6px 10px; font-size:12px; color:var(--text-secondary); display:flex; align-items:center; gap:6px; }
 
-        .audio-controls {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 1rem;
-            margin-top: 1rem;
-            padding: 1rem;
-            background-color: var(--secondary-bg);
-            border-radius: 0.5rem;
-        }
+    /* ---------- Center: work area ---------- */
+    .toolbar {
+      display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:space-between;
+      padding:8px; border:1px solid var(--border-color); border-radius:10px; background: var(--secondary-bg);
+    }
+    .tool-group { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .chip { background: var(--chip-bg); border:1px solid var(--border-color); color:var(--text-secondary); padding:6px 10px; border-radius:999px; font-size:12px; display:inline-flex; align-items:center; gap:6px; cursor:pointer; }
+    .chip[data-active="true"] { color:#fff; background: var(--accent-primary); border-color: transparent; }
 
-        .control-btn {
-            background-color: var(--accent-primary);
-            color: white;
-            border: none;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 1rem;
-        }
+    .spectrogram-wrap { position:relative; background:#000; border-radius:10px; overflow:hidden; border:1px solid var(--border-color); height:360px; }
+    .spectrogram { position:absolute; inset:0; }
+    .cursor-overlay { pointer-events:none; position:absolute; inset:0; }
+    .vertical-cursor { position:absolute; top:0; width:2px; height:100%; background: rgba(255,64,64,.9); }
 
-        .control-btn:hover {
-            opacity: 0.9;
-        }
+    .waveform { height:140px; border:1px solid var(--border-color); border-radius:10px; overflow:hidden; background: #0b0e13; }
+    .timeline { height:48px; border:1px dashed var(--border-color); border-radius:10px; display:flex; align-items:center; padding-left:8px; }
 
-        .control-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
+    .audio-controls { display:flex; align-items:center; justify-content:center; gap:10px; padding:10px; background: var(--secondary-bg); border:1px solid var(--border-color); border-radius:10px; }
+    .control-btn { width:40px; height:40px; border-radius:10px; border:1px solid var(--border-color); background:var(--chip-bg); display:grid; place-items:center; cursor:pointer; }
+    .control-btn.primary { background: var(--accent-primary); color:#fff; border-color: transparent; }
 
-        .playback-speed {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
+    select, input[type="number"], input[type="text"] {
+      background: var(--chip-bg); border:1px solid var(--border-color); color:var(--text-primary); border-radius:8px; padding:6px 8px; height:36px;
+    }
 
-        .playback-speed select {
-            background-color: var(--secondary-bg);
-            color: var(--text-primary);
-            border: 1px solid var(--border-color);
-            border-radius: 0.375rem;
-            padding: 0.3rem 0.5rem;
-        }
+    .timefreq-indicator { display:flex; gap:12px; align-items:center; font-size:12px; color:var(--text-secondary); }
 
-        .label-btn {
-            display: block;
-            width: 100%;
-            padding: 0.8rem;
-            margin-bottom: 0.5rem;
-            border: none;
-            border-radius: 0.375rem;
-            background-color: var(--secondary-bg);
-            color: var(--text-primary);
-            text-align: left;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
+    /* ---------- Left: queue ---------- */
+    .queue-toolbar { display:flex; gap:8px; margin-bottom:10px; }
+    .file-list { list-style:none; margin:0; padding:0; }
+    .file-item { padding:10px; border:1px solid var(--border-color); border-radius:10px; margin-bottom:8px; cursor:pointer; transition:transform .06s ease, background .2s; display:grid; gap:6px; }
+    .file-item:hover { transform: translateY(-1px); }
+    .file-item.active { outline:2px solid var(--accent-primary); background: rgba(138,92,254,.08); }
+    .file-rows { display:flex; align-items:center; justify-content:space-between; }
+    .status-badge { padding:3px 8px; border-radius:999px; font-size:11px; border:1px solid var(--border-color); }
+    .status-badge.processed { background: rgba(72,187,120,.12); color: var(--success); }
+    .status-badge.not-processed { background: rgba(237,137,54,.12); color: var(--warning); }
 
-        .label-btn.active {
-            background-color: var(--accent-primary);
-            color: white;
-        }
+    /* ---------- Right: tools ---------- */
+    .label-section h4 { margin:8px 0; }
+    .label-grid { display:grid; grid-template-columns:1fr; gap:8px; }
+    .label-btn { display:flex; align-items:center; gap:8px; justify-content:space-between; padding:10px 12px; border-radius:10px; cursor:pointer; border:1px solid var(--border-color); background:var(--chip-bg); }
+    .label-btn[data-active="true"] { background: var(--accent-primary); color:#fff; border-color: transparent; }
+    .label-pill { display:flex; align-items:center; gap:8px; }
+    .shortcut { opacity:.7; font-size:12px; }
 
-        .label-btn:hover:not(.active) {
-            background-color: rgba(138, 92, 254, 0.2);
-        }
+    .slider-row { display:grid; grid-template-columns:auto 1fr 56px; align-items:center; gap:10px; }
+    .action-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
+    .action-btn { padding:10px 12px; border-radius:10px; border:1px solid var(--border-color); background:var(--chip-bg); cursor:pointer; }
+    .action-btn.save { background: var(--success); color:#fff; border-color: transparent; }
+    .action-btn.next { background: var(--info); color:#001018; border-color: transparent; }
 
-        .label-btn i {
-            margin-right: 0.5rem;
-            width: 20px;
-            text-align: center;
-        }
+    .autosave-dot { width:8px; height:8px; border-radius:999px; background:#9aa0a6; display:inline-block; }
+    .autosave-dot[data-state="saved"] { background: var(--success); }
+    .autosave-dot[data-state="dirty"] { background: var(--warning); }
 
-        .slider-container {
-            margin: 1.5rem 0;
-        }
-
-        .slider-container label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-        }
-
-        .slider {
-            width: 100%;
-        }
-
-        .textarea-container {
-            margin: 1.5rem 0;
-        }
-
-        .textarea-container label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-        }
-
-        textarea {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid var(--border-color);
-            border-radius: 0.375rem;
-            background-color: var(--secondary-bg);
-            color: var(--text-primary);
-            resize: vertical;
-        }
-
-        .action-buttons {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.75rem;
-            margin-top: 1.5rem;
-        }
-
-        .action-btn {
-            padding: 0.75rem;
-            border: none;
-            border-radius: 0.375rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .action-btn.save {
-            background-color: var(--success);
-            color: white;
-        }
-
-        .action-btn.reset {
-            background-color: var(--warning);
-            color: white;
-        }
-
-        .action-btn.undo {
-            background-color: var(--secondary-bg);
-            color: var(--text-primary);
-        }
-
-        .action-btn.redo {
-            background-color: var(--secondary-bg);
-            color: var(--text-primary);
-        }
-
-        .action-btn:hover {
-            opacity: 0.9;
-        }
-
-        .file-list {
-            list-style: none;
-            padding: 0;
-        }
-
-        .file-item {
-            padding: 0.75rem;
-            border-bottom: 1px solid var(--border-color);
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        .file-item:hover {
-            background-color: rgba(138, 92, 254, 0.1);
-        }
-
-        .file-item.active {
-            background-color: rgba(138, 92, 254, 0.2);
-            border-left: 3px solid var(--accent-primary);
-        }
-
-        .file-item:last-child {
-            border-bottom: none;
-        }
-
-        .file-name {
-            font-weight: 500;
-            margin-bottom: 0.25rem;
-        }
-
-        .file-status {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-        }
-
-        .status-badge {
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.375rem;
-            font-size: 0.8rem;
-            font-weight: 500;
-            display: inline-block;
-        }
-
-        .status-badge.processed {
-            background-color: rgba(72, 187, 120, 0.15);
-            color: var(--success);
-        }
-
-        .status-badge.not-processed {
-            background-color: rgba(237, 137, 54, 0.15);
-            color: var(--warning);
-        }
-
-        /* Mobile responsive */
-        @media (max-width: 1199px) {
-            .tool-container {
-                grid-template-columns: 200px 1fr 200px;
-            }
-        }
-
-        @media (max-width: 991px) {
-            .tool-container {
-                grid-template-columns: 1fr;
-                height: auto;
-            }
-            
-            .left-panel, .right-panel {
-                order: 2;
-            }
-            
-            .center-panel {
-                order: 1;
-                grid-column: 1;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .audio-controls {
-                flex-wrap: wrap;
-            }
-            
-            .action-buttons {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+    /* ---------- Responsive ---------- */
+    @media (max-width: 1199px) {
+      .tool-container { grid-template-columns: 240px 1fr 300px; }
+    }
+    @media (max-width: 991px) {
+      .tool-container { grid-template-columns: 1fr; }
+      .left-panel, .right-panel { order: 2; }
+      .center-panel { order: 1; }
+    }
+  </style>
 </head>
 <body>
-    <!-- Hamburger Menu Button (Visible on Mobile) -->
-    <button class="hamburger-menu" id="hamburger-menu">
-        <i class="fas fa-bars"></i>
-    </button>
-
-    <!-- Mobile Navigation Overlay (slides in from right) -->
-    <nav class="mobile-nav-overlay" id="mobile-nav-overlay">
-        <div class="mobile-nav-header">
-            <h3>Menu</h3>
-            <button class="close-btn" id="mobile-nav-close">
-                <i class="fas fa-times"></i>
-            </button>
+  <main id="main-content">
+    <header class="page-header">
+      <div class="header-left">
+        <h1>오디오 스펙트로그램 라벨링 툴</h1>
+        <div class="metric-badges" aria-live="polite">
+          <span class="metric"><i class="fa-solid fa-inbox"></i><b id="m-queue">0</b> 대기</span>
+          <span class="metric"><i class="fa-regular fa-circle-check"></i><b id="m-done-today">0</b> 오늘 완료</span>
+          <span class="metric"><i class="fa-regular fa-clock"></i>평균 <b id="m-avg">—</b></span>
         </div>
-        <ul class="mobile-nav-menu">
-            <li><a href="#" class="nav-link" onclick="loadMainDashboard(); closeMobileNav(); return false;"><i class="fas fa-th-large"></i> <span>대시보드</span></a></li>
-            <li><a href="#" id="assets-link" class="nav-link" onclick="loadAssetsDetailContent(); closeMobileNav(); return false;"><i class="fas fa-cubes"></i> <span>자산 목록</span></a></li>
-            <li><a href="#" class="nav-link" onclick="loadPageContent('reports'); closeMobileNav(); return false;"><i class="fas fa-chart-pie"></i> <span>리포트</span></a></li>
-            <li><a href="#settings" id="settings-link" class="nav-link" onclick="loadSettingsContent(); closeMobileNav(); return false;"><i class="fas fa-cog"></i> <span>설정</span></a></li>
-            <li><a href="#" class="nav-link" onclick="loadPageContent('help'); closeMobileNav(); return false;"><i class="fas fa-life-ring"></i> <span>도움말</span></a></li>
-            <li><a href="#" id="logout-link" class="nav-link" onclick="logoutUser(); closeMobileNav(); return false;"><i class="fas fa-sign-out-alt"></i> <span>로그아웃</span></a></li>
+      </div>
+      <div class="tool-group">
+        <button class="chip" id="theme-toggle" aria-label="다크/라이트 전환"><i class="fa-solid fa-moon"></i> 테마</button>
+        <div class="tool-group" role="group" aria-label="보기 설정">
+          <span class="chip" id="snap-toggle" data-active="true" title="그리드 스냅 (G)"><i class="fa-solid fa-magnet"></i> 스냅</span>
+          <span class="chip" id="grid-toggle" data-active="true" title="그리드 표시 (H)"><i class="fa-solid fa-border-all"></i> 그리드</span>
+          <span class="chip" id="harmonic-toggle" title="하모닉 가이드 표시 (A)"><i class="fa-solid fa-wave-square"></i> 하모닉</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="tool-container">
+      <!-- Left Panel: Queue -->
+      <aside class="panel left-panel" aria-label="라벨링 대기열">
+        <div class="queue-toolbar">
+          <input id="q-search" type="text" placeholder="파일명/메모 검색" aria-label="검색" />
+          <select id="q-filter-status" aria-label="상태">
+            <option value="pending">미처리</option>
+            <option value="all">전체</option>
+            <option value="done">완료</option>
+          </select>
+        </div>
+        <ul id="queue" class="file-list" role="listbox" aria-label="파일 목록">
+          <!-- populated by JS -->
         </ul>
-    </nav>
+      </aside>
 
-    <!-- Sidebar will be loaded as a component but hidden on mobile -->
-    <aside id="sidebar">
-        <!-- This will be populated by JavaScript -->
-    </aside>
-
-    <!-- Main Content -->
-    <main id="main-content">
-        <header class="page-header">
-            <div class="header-left">
-                <h1>오디오 스펙트로그램 라벨링 툴</h1>
-                <p>전문가용 2D 오디오 스펙트로그램 라벨링 도구</p>
-            </div>
-            <div class="header-right">
-                <div class="search-bar">
-                    <i class="fas fa-search"></i>
-                    <input type="text" placeholder="라벨링 파일 검색...">
-                </div>
-                <button class="icon-button"><i class="fas fa-comment-dots"></i></button>
-                <button class="icon-button"><i class="fas fa-bell"></i></button>
-            </div>
-        </header>
-
-        <div class="tool-container">
-            <!-- Left Panel: Audio Queue -->
-            <div class="panel left-panel">
-                <h3><i class="fas fa-list"></i> 라벨링 대기열</h3>
-                <ul class="file-list">
-                    <li class="file-item active">
-                        <div class="file-name">compressor_001.wav</div>
-                        <div class="file-status">
-                            <span class="status-badge not-processed">처리필요</span>
-                            <span>2023-05-15 14:30</span>
-                        </div>
-                    </li>
-                    <li class="file-item">
-                        <div class="file-name">compressor_002.wav</div>
-                        <div class="file-status">
-                            <span class="status-badge not-processed">처리필요</span>
-                            <span>2023-05-15 15:45</span>
-                        </div>
-                    </li>
-                    <li class="file-item">
-                        <div class="file-name">compressor_003.wav</div>
-                        <div class="file-status">
-                            <span class="status-badge not-processed">처리필요</span>
-                            <span>2023-05-15 16:20</span>
-                        </div>
-                    </li>
-                    <li class="file-item">
-                        <div class="file-name">compressor_004.wav</div>
-                        <div class="file-status">
-                            <span class="status-badge processed">처리완료</span>
-                            <span>2023-05-14 10:15</span>
-                        </div>
-                    </li>
-                    <li class="file-item">
-                        <div class="file-name">compressor_005.wav</div>
-                        <div class="file-status">
-                            <span class="status-badge processed">처리완료</span>
-                            <span>2023-05-14 11:00</span>
-                        </div>
-                    </li>
-                </ul>
-            </div>
-
-            <!-- Center Panel: Work Area -->
-            <div class="panel center-panel">
-                <div class="spectrogram-container">
-                    <img id="spectrogram-img" src="https://placehold.co/800x300/1a1c23/ffffff?text=Spectrogram+Image" alt="Spectrogram">
-                    <div class="cursor-overlay">
-                        <div class="vertical-cursor" id="time-cursor"></div>
-                    </div>
-                </div>
-
-                <div class="waveform-container">
-                    <div id="waveform"></div>
-                </div>
-
-                <div class="audio-controls">
-                    <button class="control-btn" id="play-btn" title="재생/일시정지 (Space)">
-                        <i class="fas fa-play"></i>
-                    </button>
-                    <button class="control-btn" id="prev-btn" title="0.1초 뒤로 (←)">
-                        <i class="fas fa-step-backward"></i>
-                    </button>
-                    <button class="control-btn" id="next-btn" title="0.1초 앞으로 (→)">
-                        <i class="fas fa-step-forward"></i>
-                    </button>
-                    <button class="control-btn" id="loop-btn" title="반복 영역 설정 (L)">
-                        <i class="fas fa-repeat"></i>
-                    </button>
-                    
-                    <div class="playback-speed">
-                        <span>속도:</span>
-                        <select id="playback-speed">
-                            <option value="0.5">0.5x</option>
-                            <option value="0.75">0.75x</option>
-                            <option value="1" selected>1x</option>
-                            <option value="1.25">1.25x</option>
-                            <option value="1.5">1.5x</option>
-                            <option value="2">2x</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Right Panel: Labeling Tools -->
-            <div class="panel right-panel">
-                <h3><i class="fas fa-tags"></i> 라벨링 도구</h3>
-                
-                <h4>라벨 선택</h4>
-                <button class="label-btn active" data-label="normal">
-                    <i class="fas fa-check-circle"></i> normal <span class="shortcut">(1)</span>
-                </button>
-                <button class="label-btn" data-label="warning">
-                    <i class="fas fa-exclamation-triangle"></i> warning <span class="shortcut">(2)</span>
-                </button>
-                <button class="label-btn" data-label="critical">
-                    <i class="fas fa-exclamation-circle"></i> critical <span class="shortcut">(3)</span>
-                </button>
-                <button class="label-btn" data-label="unknown">
-                    <i class="fas fa-question-circle"></i> unknown <span class="shortcut">(4)</span>
-                </button>
-                
-                <div class="slider-container">
-                    <label for="confidence-slider">신뢰도: <span id="confidence-value">90</span>%</label>
-                    <input type="range" id="confidence-slider" class="slider" min="0" max="100" value="90">
-                </div>
-                
-                <div class="textarea-container">
-                    <label for="notes">메모</label>
-                    <textarea id="notes" rows="4" placeholder="라벨링 관련 메모를 입력하세요..."></textarea>
-                </div>
-                
-                <div class="action-buttons">
-                    <button class="action-btn save" id="save-btn">저장</button>
-                    <button class="action-btn reset" id="reset-btn">초기화</button>
-                    <button class="action-btn undo" id="undo-btn">되돌리기</button>
-                    <button class="action-btn redo" id="redo-btn">다시실행</button>
-                </div>
-            </div>
+      <!-- Center Panel: Work Area -->
+      <section class="panel center-panel" aria-label="작업 영역">
+        <div class="toolbar">
+          <div class="tool-group">
+            <button class="chip" id="zoom-out" title="줌 아웃 (-)"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+            <button class="chip" id="zoom-in" title="줌 인 (=)"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+            <span class="timefreq-indicator">
+              <i class="fa-regular fa-clock"></i>
+              <span id="t-ind">00:00.0 / 00:00.0</span>
+              <span style="width:10px"></span>
+              <i class="fa-solid fa-wave-square"></i>
+              <span id="f-ind">— Hz</span>
+            </span>
+          </div>
+          <div class="tool-group">
+            <label class="chip" title="재생 속도">
+              <i class="fa-solid fa-gauge-high"></i>
+              <select id="playback-speed" aria-label="속도">
+                <option value="0.5">0.5x</option>
+                <option value="0.75">0.75x</option>
+                <option value="1" selected>1x</option>
+                <option value="1.25">1.25x</option>
+                <option value="1.5">1.5x</option>
+                <option value="2">2x</option>
+              </select>
+            </label>
+          </div>
         </div>
-    </main>
 
-    <script src="/static/js/labeling/audio_spectrogram_labeling.js"></script>
+        <div class="spectrogram-wrap" aria-label="스펙트로그램">
+          <!-- Wavesurfer Spectrogram plugin will render into this container -->
+          <div id="spectrogram" class="spectrogram" aria-hidden="true"></div>
+          <!-- Annotorious overlay will attach to spectrogram canvas later -->
+          <div class="cursor-overlay"><div class="vertical-cursor" id="time-cursor" style="left:0"></div></div>
+        </div>
+
+        <div id="waveform" class="waveform" aria-label="파형"></div>
+        <div id="timeline" class="timeline" aria-label="타임라인"></div>
+
+        <div class="audio-controls" role="group" aria-label="오디오 컨트롤">
+          <button class="control-btn primary" id="play-btn" title="재생/일시정지 (Space)"><i class="fa-solid fa-play"></i></button>
+          <button class="control-btn" id="backward" title="0.1초 뒤로 (←)"><i class="fa-solid fa-backward-step"></i></button>
+          <button class="control-btn" id="forward" title="0.1초 앞으로 (→)"><i class="fa-solid fa-forward-step"></i></button>
+          <button class="control-btn" id="loop-btn" title="루프 토글 (L)"><i class="fa-solid fa-repeat"></i></button>
+        </div>
+      </section>
+
+      <!-- Right Panel: Tools -->
+      <aside class="panel right-panel" aria-label="라벨 도구">
+        <section class="label-section" aria-labelledby="label-header">
+          <h3 id="label-header"><i class="fa-solid fa-tags"></i> 라벨 선택</h3>
+          <div class="label-grid" id="label-grid">
+            <button class="label-btn" data-label="normal" data-active="true" aria-pressed="true">
+              <span class="label-pill"><i class="fa-solid fa-circle-check"></i> normal</span>
+              <span class="shortcut">(1)</span>
+            </button>
+            <button class="label-btn" data-label="warning">
+              <span class="label-pill"><i class="fa-solid fa-triangle-exclamation"></i> warning</span>
+              <span class="shortcut">(2)</span>
+            </button>
+            <button class="label-btn" data-label="critical">
+              <span class="label-pill"><i class="fa-solid fa-circle-exclamation"></i> critical</span>
+              <span class="shortcut">(3)</span>
+            </button>
+            <button class="label-btn" data-label="unknown">
+              <span class="label-pill"><i class="fa-solid fa-circle-question"></i> unknown</span>
+              <span class="shortcut">(4)</span>
+            </button>
+          </div>
+        </section>
+
+        <section style="margin-top:14px">
+          <label class="slider-row" for="confidence">
+            <span>신뢰도</span>
+            <input id="confidence" type="range" min="0" max="100" value="90" />
+            <input id="confidence-num" type="number" min="0" max="100" value="90" style="width:56px" />
+          </label>
+        </section>
+
+        <section style="margin-top:12px">
+          <label for="notes">메모</label>
+          <textarea id="notes" rows="5" placeholder="라벨링 관련 메모" style="width:100%; background:var(--chip-bg); color:var(--text-primary); border:1px solid var(--border-color); border-radius:10px; padding:10px;"></textarea>
+        </section>
+
+        <section style="margin-top:12px; display:flex; align-items:center; justify-content:space-between; gap:8px; color:var(--text-secondary); font-size:12px;">
+          <div>자동저장 <span class="autosave-dot" id="autosave-dot" data-state="saved"></span></div>
+          <div><i class="fa-regular fa-keyboard"></i> 단축키: 1–4, Space, L, ←/→</div>
+        </section>
+
+        <div class="action-grid">
+          <button class="action-btn" id="undo-btn" title="되돌리기 (Ctrl/Cmd+Z)"><i class="fa-solid fa-rotate-left"></i> 되돌리기</button>
+          <button class="action-btn" id="redo-btn" title="다시실행 (Shift+Z)"><i class="fa-solid fa-rotate-right"></i> 다시실행</button>
+          <button class="action-btn save" id="save-btn"><i class="fa-solid fa-cloud-arrow-up"></i> 저장</button>
+          <button class="action-btn next" id="next-btn"><i class="fa-solid fa-circle-right"></i> 다음 파일</button>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <!-- Wavesurfer core & plugins (logic will be wired in JS file) -->
+  <script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.js"></script>
+  <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/spectrogram.min.js"></script>
+  <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/regions.min.js"></script>
+  <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/timeline.min.js"></script>
+  <script src="https://unpkg.com/@recogito/annotorious@2.3.0/dist/annotorious.min.js"></script>
+
+  <!-- UI-only micro interactions (safe even before full JS wiring) -->
+  <script>
+    const root = document.documentElement;
+    const themeBtn = document.getElementById('theme-toggle');
+    themeBtn?.addEventListener('click', () => {
+      const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+      document.documentElement.setAttribute('data-theme', isLight ? 'dark' : 'light');
+      themeBtn.setAttribute('aria-pressed', String(!isLight));
+    });
+
+    // Confidence slider sync
+    const cSlider = document.getElementById('confidence');
+    const cNum = document.getElementById('confidence-num');
+    cSlider?.addEventListener('input', () => { cNum.value = cSlider.value; markDirty(); });
+    cNum?.addEventListener('input', () => { cSlider.value = cNum.value; markDirty(); });
+
+    // Label button active state
+    const labelGrid = document.getElementById('label-grid');
+    let currentLabel = 'normal';
+    labelGrid?.addEventListener('click', (e) => {
+      const btn = e.target.closest('.label-btn');
+      if(!btn) return;
+      labelGrid.querySelectorAll('.label-btn').forEach(b => { b.dataset.active = 'false'; b.setAttribute('aria-pressed','false'); });
+      btn.dataset.active = 'true'; btn.setAttribute('aria-pressed','true');
+      currentLabel = btn.dataset.label;
+      markDirty();
+    });
+
+    // Autosave indicator (UI only)
+    const dot = document.getElementById('autosave-dot');
+    let autosaveTimer;
+    function markDirty(){
+      dot.dataset.state = 'dirty';
+      clearTimeout(autosaveTimer);
+      autosaveTimer = setTimeout(()=>{ dot.dataset.state = 'saved'; }, 1200);
+    }
+
+    // Dummy queue items (UI preview). Will be replaced by /api/labeling/queue
+    const queue = document.getElementById('queue');
+    const demo = [
+      {id:1, file_name:'compressor_001.wav', is_processed:false, ts:'2025-11-03 14:30'},
+      {id:2, file_name:'compressor_002.wav', is_processed:false, ts:'2025-11-03 15:45'},
+      {id:3, file_name:'compressor_003.wav', is_processed:false, ts:'2025-11-03 16:20'},
+      {id:4, file_name:'compressor_004.wav', is_processed:true, ts:'2025-11-02 10:15'}
+    ];
+    document.getElementById('m-queue').textContent = demo.filter(d=>!d.is_processed).length;
+    queue.innerHTML = demo.map((d,i)=>`
+      <li class="file-item ${i===0?'active':''}" role="option" aria-selected="${i===0}">
+        <div class="file-rows">
+          <div class="file-name">${d.file_name}</div>
+          <span class="status-badge ${d.is_processed?'processed':'not-processed'}">${d.is_processed?'완료':'처리필요'}</span>
+        </div>
+        <div class="file-rows" style="color:var(--text-secondary); font-size:12px;">
+          <span>${d.ts}</span>
+          <span>#${d.id}</span>
+        </div>
+      </li>`).join('');
+
+    // Keyboard shortcuts (UI-layer only; audio wiring will be in external JS)
+    document.addEventListener('keydown', (e)=>{
+      if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) return;
+      if(e.code==='Digit1' || e.code==='Digit2' || e.code==='Digit3' || e.code==='Digit4'){
+        const map = {Digit1:'normal', Digit2:'warning', Digit3:'critical', Digit4:'unknown'};
+        const label = map[e.code];
+        const target = [...document.querySelectorAll('.label-btn')].find(b=>b.dataset.label===label);
+        if(target){ target.click(); }
+      }
+    });
+  </script>
+
+  <!-- App logic (to be implemented next; keeps UI clean) -->
+  <script src="/static/js/auth-manager.js"></script>
+  <script src="/static/js/labeling/audio_spectrogram_labeling.js"></script>
 </body>
 </html>

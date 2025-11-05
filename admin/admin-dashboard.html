@@ -172,12 +172,13 @@
             <a href="#" class="admin-nav-link" data-section="system">
                 <i class="fas fa-cogs"></i> <span>시스템 설정</span>
             </a>
-            <a href="/" class="admin-nav-link text-danger">
-                <i class="fas fa-arrow-left"></i> <span>메인으로</span>
-            </a>
-        </nav>
-        
-        <div class="mt-auto">
+                                                            <a href="/static/labeling/audio_spectrogram_labeling.html" class="admin-nav-link">
+                                                                <i class="fas fa-microphone"></i> <span>라벨링 페이지</span>
+                                                            </a>
+                                                            <a href="/" class="admin-nav-link text-danger">
+                                                                <i class="fas fa-arrow-left"></i> <span>메인으로</span>
+                                                            </a>
+                                                        </nav>        <div class="mt-auto">
             <button class="btn btn-danger w-100" id="logoutBtn">
                 <i class="fas fa-sign-out-alt me-2"></i>로그아웃
             </button>
@@ -331,6 +332,20 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
+        </section>
+
+        <!-- System Settings Section -->
+        <section id="system-section" class="inactive-section" style="display: none;">
+            <header class="page-header">
+                <div class="header-left">
+                    <h1>시스템 설정</h1>
+                    <p>시스템 관련 설정</p>
+                </div>
+            </header>
+
+            <div class="admin-card">
+                <p>시스템 설정 페이지입니다.</p>
             </div>
         </section>
     </main>

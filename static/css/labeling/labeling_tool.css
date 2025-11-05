@@ -1,0 +1,73 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+    --primary-bg: #1A1C23;
+    --secondary-bg: #22252A;
+    --sidebar-bg: #1A1C23;
+    --card-bg: #22252A;
+    --text-primary: #FFFFFF;
+    --text-secondary: #A0AEC0;
+    --accent-primary: #8A5CFE;
+    --accent-secondary: #38B2AC;
+    --border-color: #32363C;
+    --danger: #E53E3E;
+    --success: #48BB78;
+    --warning: #ED8936;
+}
+
+/* Light Theme defined in the HTML via data-theme attribute */
+
+body {
+    background-color: var(--secondary-bg); /* Changed from primary for the tool */
+    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
+    /* display: flex; -- REMOVED to prevent flex layout with a non-existent sidebar */
+}
+
+/* Removed all #sidebar, .sidebar-header, .nav-menu, etc. styles as they are not needed */
+
+#main-content {
+    /* MODIFIED: Removed sidebar-related margins and widths */
+    width: 100%;
+    max-width: 1920px; /* Add a max-width for very large screens */
+    margin: 0 auto; /* Center the content */
+    padding: 0 1.5rem; /* Add horizontal padding */
+}
+
+/* Mobile responsive styles for main content */
+@media (max-width: 768px) {
+    #main-content {
+        padding: 0 1rem;
+    }
+}
+
+.page-header {
+    height: 80px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem; /* Reduced margin */
+}
+
+.header-left h1 {
+    font-size: 1.5rem; /* Adjusted size */
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.header-left p {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    margin: 0;
+    font-weight: 500;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+}
+
+/* Keep other relevant styles from dashboard_v3.css if they are used in the labeling tool HTML */
+/* For simplicity, we assume only the core layout styles needed adjustment. */
+/* The specific styles for the labeling tool are already in the <style> tag in the HTML. */

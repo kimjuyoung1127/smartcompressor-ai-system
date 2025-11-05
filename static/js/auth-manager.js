@@ -130,6 +130,18 @@ class AuthManager {
     login(userData) {
         this.saveUserToStorage(userData);
         this.showNotification('로그인되었습니다.', 'success');
+        // 역할에 따른 페이지 리디렉션
+        if (this.currentUser && this.currentUser.role) {
+            if (this.currentUser.role === 'admin') {
+                window.location.href = '/admin/admin-dashboard.html';
+            } else if (this.currentUser.role === 'labeler') {
+                window.location.href = '/static/labeling/audio_spectrogram_labeling.html';
+            } else {
+                window.location.href = '/'; // 기본 랜딩 페이지
+            }
+        } else {
+            window.location.href = '/'; // 역할 정보가 없으면 기본 랜딩 페이지로
+        }
     }
     
     logout() {

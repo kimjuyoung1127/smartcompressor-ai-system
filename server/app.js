@@ -165,6 +165,11 @@ app.get('/admin-panel', [verifySession, ensureAdmin], (req, res) => {
     res.sendFile(path.join(__dirname, '../admin/admin-dashboard.html'));
 });
 
+// Admin Registration Route
+app.get('/register-admin', (req, res) => {
+    res.sendFile(path.join(__dirname, '../admin/register-admin.html'));
+});
+
 
 
 // ESP32 센서 대시보드 페이지

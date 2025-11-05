@@ -4,8 +4,12 @@ const crypto = require('crypto');
 const router = express.Router();
 const DatabaseService = require('../../services/database_service');
 const { requireAdmin } = require('../middleware/rbac');
+const { authenticateSession } = require('../middleware/auth');
 
 const db = new DatabaseService();
+
+// 모든 라우트에 세션 인증 미들웨어 적용
+router.use(authenticateSession);
 
 // 관리자 전용: 관리자 초대 링크 생성
 router.post('/invite-admin', requireAdmin, async (req, res) => {

@@ -20,6 +20,7 @@ from routes.ai_routes import ai_bp
 from routes.esp32_routes import esp32_bp
 from routes.notification_routes import notification_bp
 from routes.kakao_notification_routes import kakao_notification_bp
+from ai.labeling.api import labeling_bp
 # from routes.enhanced_auth_routes import enhanced_auth_bp  # SQLite 제거 - Node.js 인증 사용
 from routes.iot_sensor_routes import iot_sensor_bp
 from routes.dashboard_routes import dashboard_bp
@@ -109,6 +110,7 @@ def create_app():
     app.register_blueprint(mobile_app_bp)
     # 분석 시스템 라우트 등록 # NEW
     app.register_blueprint(analytics_bp)
+    app.register_blueprint(labeling_bp, url_prefix='/api/labeling')
 
     # 정적 파일 서빙을 위한 라우트 추가 (dashboard-components)
     @app.route('/static/dashboard-components/<path:filename>')
