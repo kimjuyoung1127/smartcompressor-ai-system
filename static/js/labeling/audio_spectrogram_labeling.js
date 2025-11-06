@@ -65,11 +65,11 @@ document.addEventListener('DOMContentLoaded', () => {
       responsive: true,
       plugins: [
         // Timeline plugin
-        WaveSurfer.Timeline.create({
+        WaveSurfer.timeline.create({
           container: '#timeline',
         }),
-        // Spectrogram plugin - removing colorMap to avoid the error
-        WaveSurfer.Spectrogram.create({
+        // Spectrogram plugin
+        WaveSurfer.spectrogram.create({
           container: '#spectrogram',
           labels: true,
           fftSamples: 1024,
@@ -77,7 +77,10 @@ document.addEventListener('DOMContentLoaded', () => {
       ]
     });
 
-
+    // The spectrogram plugin instance is the second plugin in the array
+    if (wavesurfer && wavesurfer.plugins) {
+      spectrogram = wavesurfer.plugins[1];
+    }
     
     wavesurfer.on('timeupdate', (currentTime) => updateIndicators(currentTime));
     wavesurfer.on('play', () => dom.playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>');
@@ -85,7 +88,6 @@ document.addEventListener('DOMContentLoaded', () => {
     wavesurfer.on('finish', () => dom.playBtn.innerHTML = '<i class="fa-solid fa-play"></i>');
 
     // Initialize Annotorious once the spectrogram canvas is ready
-    // We'll trigger this when the audio loads or after a short delay to ensure DOM is ready
     wavesurfer.on('decode', initAnnotorious);
     wavesurfer.on('ready', initAnnotorious);
   }

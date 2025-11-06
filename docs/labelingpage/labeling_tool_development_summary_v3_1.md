@@ -47,3 +47,23 @@
 *   **기타 라우트 모듈화**: 다른 라우트 파일들에 대해서도 기능별로 그룹화하여 정리
 *   **라벨링 관련 추가 모듈**: 라벨링 기능 확장 시 관련 유틸리티나 미들웨어 등을 동일한 디렉토리에 추가할 수 있습니다.
 *   **테스트 파일 정리**: 기능별로 테스트 파일도 유사한 구조로 정리
+
+## 8. v3.2 긴급 버그 수정 (2025-11-06)
+
+파일 구조 변경 이후 발생한 여러 심각한 버그들을 해결했습니다.
+
+### 8.1. 서버 측 경로 문제 해결
+
+*   **문제점**: `v3.1`에서 파일 구조를 대대적으로 변경한 후, `require` 경로가 맞지 않아 서버가 시작되지 않는 `MODULE_NOT_FOUND` 오류가 발생했습니다.
+*   **해결**: 오류가 발생한 모든 파일(`auth/index.js`, `labeling/index.js`, `admin/invites.js`, `admin/users.js`)의 상대 경로를 새로운 구조에 맞게 수정하여 서버가 정상적으로 실행되도록 했습니다.
+
+### 8.2. 클라이언트 측 라벨링 툴 오류 해결
+
+*   **문제점**: 라벨링 페이지(`audio_spectrogram_labeling.html`)에서 `wavesurfer.js` 라이브러리 버전 충돌 및 API 사용 오류로 인해 오디오 플레이어가 전혀 동작하지 않았습니다.
+    *   `WaveSurfer.create is not a function`
+    *   `Cannot read properties of undefined (reading 'load')`
+    *   `Cannot read properties of undefined (reading 'playPause')`
+*   **해결**:
+    1.  **라이브러리 다운그레이드**: `wavesurfer.js` v7은 ES 모듈 방식으로 로드해야 하지만, 기존 코드는 v6 API를 사용하고 있었습니다. HTML 파일에서 라이브러리를 v7에서 v6.6.4로 다운그레이드하여 버전 충돌을 해결했습니다.
+    2.  **API 사용법 수정**: `wavesurfer.js` v6의 API에 맞게 플러그인 이름을 소문자(`WaveSurfer.timeline`, `WaveSurfer.spectrogram`)로 수정하여 `create` 함수를 찾지 못하는 오류를 해결했습니다.
+    3.  **초기화 로직 보강**: `spectrogram` 플러그인 인스턴스가 변수에 올바르게 할당되도록 초기화 코드를 수정하여 안정성을 높였습니다.

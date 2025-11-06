@@ -299,11 +299,11 @@
     </div>
   </main>
 
-  <!-- Wavesurfer core & plugins (logic will be wired in JS file) -->
-  <script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.js"></script>
-  <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/spectrogram.min.js"></script>
-  <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/regions.min.js"></script>
-  <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/timeline.min.js"></script>
+  <!-- Wavesurfer core & plugins (using v6 to match legacy code) -->
+  <script src="https://unpkg.com/wavesurfer.js@6.6.4/dist/wavesurfer.js" defer></script>
+  <script src="https://unpkg.com/wavesurfer.js@6.6.4/dist/plugin/wavesurfer.spectrogram.min.js" defer></script>
+  <script src="https://unpkg.com/wavesurfer.js@6.6.4/dist/plugin/wavesurfer.regions.min.js" defer></script>
+  <script src="https://unpkg.com/wavesurfer.js@6.6.4/dist/plugin/wavesurfer.timeline.min.js" defer></script>
   <script src="https://unpkg.com/@recogito/annotorious@2.3.0/dist/annotorious.min.js"></script>
 
   <!-- UI-only micro interactions (safe even before full JS wiring) -->
@@ -358,7 +358,7 @@
   </script>
 
   <!-- App logic (to be implemented next; keeps UI clean) -->
-  <script src="/static/js/auth-manager.js"></script>
-  <script src="/static/js/labeling/audio_spectrogram_labeling.js"></script>
+  <script src="/static/js/auth-manager.js" defer></script>
+  <script src="/static/js/labeling/audio_spectrogram_labeling.js" defer></script>
 </body>
 </html>
