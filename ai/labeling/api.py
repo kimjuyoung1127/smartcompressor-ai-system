@@ -1,5 +1,5 @@
 
-from flask import Blueprint, jsonify, request, g
+from flask import Blueprint, jsonify, request, g, send_from_directory
 from functools import wraps
 
 def require_labeler(f):
@@ -69,6 +69,66 @@ def get_peaks_data(file_id):
     if not peaks_json_path:
         return jsonify({"error": "Could not generate or find peaks data"}), 500
     return send_from_directory(peaks_json_path, filename)
+
+@labeling_bp.route('/upload', methods=['POST'])
+@require_labeler
+def upload_audio_file():
+    """Uploads an audio file for labeling."""
+    if 'audio_file' not in request.files:
+        return jsonify({"error": "No audio file provided"}), 400
+    
+    file = request.files['audio_file']
+    original_filename = request.form.get('original_filename', '')
+    
+    if file.filename == '':
+        return jsonify({"error": "No file selected"}), 400
+    
+    if file:
+        try:
+            # Import OS and other necessary modules
+            import os
+            from datetime import datetime
+            
+            # Define upload directory
+            upload_dir = os.getenv('AUDIO_BASE_PATH', 'C:\\Users\\gmdqn\\signalcraft\\data\\labeling_ready')
+            os.makedirs(upload_dir, exist_ok=True)
+            
+            # Create a standardized filename with a labeling prefix
+            timestamp = datetime.now().strftime("%Y-%m-%dT%H-%M-%S-%fZ")[:-3]  # Include milliseconds
+            name, ext = os.path.splitext(file.filename)
+            # If original file already has "labeling_" prefix, keep it, otherwise create a generic one
+            if not original_filename.startswith('labeling_'):
+                new_filename = f"labeling_unknown_{timestamp}{ext}"
+            else:
+                new_filename = f"{original_filename.split('.')[0]}_{timestamp}{ext}"
+            
+            file_path = os.path.join(upload_dir, new_filename)
+            file.save(file_path)
+            
+            # Get file stats
+            file_size = os.path.getsize(file_path)
+            
+            # Register the file in the database using the services module
+            # We'll add a new function in services for this purpose
+            file_registered = services.register_uploaded_file(
+                filename=new_filename,
+                file_path=file_path,
+                file_size=file_size,
+                uploaded_by=g.user_id
+            )
+            
+            if file_registered:
+                return jsonify({
+                    "message": "File uploaded successfully",
+                    "filename": new_filename,
+                    "file_path": file_path
+                }), 200
+            else:
+                return jsonify({"error": "Failed to register file in database"}), 500
+                
+        except Exception as e:
+            print(f"Error uploading file: {e}")
+            return jsonify({"error": str(e)}), 500
 
 @labeling_bp.route('/save', methods=['POST'])
 @require_labeler

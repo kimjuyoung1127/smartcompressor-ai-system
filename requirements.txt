@@ -32,6 +32,7 @@ requests>=2.31.0
 
 # 데이터베이스 및 설정
 python-dotenv>=1.0.0
+psycopg2-binary>=2.9.7
 supabase>=2.0.0
 
 # 시스템 및 프로세스 관리

@@ -71,3 +71,33 @@ body {
 /* Keep other relevant styles from dashboard_v3.css if they are used in the labeling tool HTML */
 /* For simplicity, we assume only the core layout styles needed adjustment. */
 /* The specific styles for the labeling tool are already in the <style> tag in the HTML. */
+
+/* Notification styles */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    color: white;
+    z-index: 10000;
+    max-width: 400px;
+    word-wrap: break-word;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.notification-success {
+    background-color: #48bb78;
+}
+
+.notification-error {
+    background-color: #ef4444;
+}
+
+.notification-warning {
+    background-color: #ed8936;
+}
+
+.notification-info {
+    background-color: #38bdf8;
+}

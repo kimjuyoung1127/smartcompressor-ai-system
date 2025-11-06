@@ -97,7 +97,14 @@
     .timefreq-indicator { display:flex; gap:12px; align-items:center; font-size:12px; color:var(--text-secondary); }
 
     /* ---------- Left: queue ---------- */
-    .queue-toolbar { display:flex; gap:8px; margin-bottom:10px; }
+    .queue-toolbar { display:flex; gap:8px; margin-bottom:10px; flex-wrap: wrap; align-items: center; }
+    .queue-toolbar input[type="text"], .queue-toolbar select {
+        flex: 1;
+        min-width: 120px;
+    }
+    .queue-toolbar .chip {
+        flex-shrink: 0;
+    }
     .file-list { list-style:none; margin:0; padding:0; }
     .file-item { padding:10px; border:1px solid var(--border-color); border-radius:10px; margin-bottom:8px; cursor:pointer; transition:transform .06s ease, background .2s; display:grid; gap:6px; }
     .file-item:hover { transform: translateY(-1px); }
@@ -167,6 +174,8 @@
             <option value="all">전체</option>
             <option value="done">완료</option>
           </select>
+          <button id="upload-btn" class="chip" title="오디오 파일 업로드"><i class="fa-solid fa-upload"></i> 파일 업로드</button>
+          <input type="file" id="file-upload" accept=".wav,.mp3,.flac,.m4a" style="display: none;" multiple>
         </div>
         <ul id="queue" class="file-list" role="listbox" aria-label="파일 목록">
           <!-- populated by JS -->
@@ -316,26 +325,7 @@
       autosaveTimer = setTimeout(()=>{ dot.dataset.state = 'saved'; }, 1200);
     }
 
-    // Dummy queue items (UI preview). Will be replaced by /api/labeling/queue
-    const queue = document.getElementById('queue');
-    const demo = [
-      {id:1, file_name:'compressor_001.wav', is_processed:false, ts:'2025-11-03 14:30'},
-      {id:2, file_name:'compressor_002.wav', is_processed:false, ts:'2025-11-03 15:45'},
-      {id:3, file_name:'compressor_003.wav', is_processed:false, ts:'2025-11-03 16:20'},
-      {id:4, file_name:'compressor_004.wav', is_processed:true, ts:'2025-11-02 10:15'}
-    ];
-    document.getElementById('m-queue').textContent = demo.filter(d=>!d.is_processed).length;
-    queue.innerHTML = demo.map((d,i)=>`
-      <li class="file-item ${i===0?'active':''}" role="option" aria-selected="${i===0}">
-        <div class="file-rows">
-          <div class="file-name">${d.file_name}</div>
-          <span class="status-badge ${d.is_processed?'processed':'not-processed'}">${d.is_processed?'완료':'처리필요'}</span>
-        </div>
-        <div class="file-rows" style="color:var(--text-secondary); font-size:12px;">
-          <span>${d.ts}</span>
-          <span>#${d.id}</span>
-        </div>
-      </li>`).join('');
+
 
     // Keyboard shortcuts (UI-layer only; audio wiring will be in external JS)
     document.addEventListener('keydown', (e)=>{

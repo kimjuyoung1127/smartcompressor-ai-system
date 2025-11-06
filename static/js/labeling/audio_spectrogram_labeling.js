@@ -52,6 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function initWavesurfer() {
     if (wavesurfer) wavesurfer.destroy();
 
+    // Initialize WaveSurfer with plugins as options
     wavesurfer = WaveSurfer.create({
       container: '#waveform',
       waveColor: '#9aa0a6',
@@ -61,54 +62,80 @@ document.addEventListener('DOMContentLoaded', () => {
       barRadius: 3,
       height: 120,
       responsive: true,
+      plugins: [
+        // Timeline plugin
+        WaveSurfer.Timeline.create({
+          container: '#timeline',
+        }),
+        // Spectrogram plugin - removing colorMap to avoid the error
+        WaveSurfer.Spectrogram.create({
+          container: '#spectrogram',
+          labels: true,
+          fftSamples: 1024,
+        })
+      ]
     });
 
-    const wsTimeline = WaveSurfer.Timeline.create({ container: '#timeline' });
 
-    spectrogram = WaveSurfer.Spectrogram.create({
-      wavesurfer: wavesurfer,
-      container: '#spectrogram',
-      labels: true,
-      colorMap: 'viridis',
-      fftSamples: 1024,
-    });
-
+    
     wavesurfer.on('timeupdate', (currentTime) => updateIndicators(currentTime));
     wavesurfer.on('play', () => dom.playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>');
     wavesurfer.on('pause', () => dom.playBtn.innerHTML = '<i class="fa-solid fa-play"></i>');
     wavesurfer.on('finish', () => dom.playBtn.innerHTML = '<i class="fa-solid fa-play"></i>');
 
     // Initialize Annotorious once the spectrogram canvas is ready
-    spectrogram.on('ready', initAnnotorious);
+    // We'll trigger this when the audio loads or after a short delay to ensure DOM is ready
+    wavesurfer.on('decode', initAnnotorious);
+    wavesurfer.on('ready', initAnnotorious);
   }
 
   // ---------------- Annotorious Init ----------------
   function initAnnotorious() {
     if (annotorious) annotorious.destroy();
 
-    const specCanvas = document.querySelector('#spectrogram canvas');
-    if (!specCanvas) {
-      console.error('Spectrogram canvas not found!');
-      return;
+    // Adding small delay to ensure canvas is rendered
+    setTimeout(() => {
+      const specCanvas = document.querySelector('#spectrogram canvas');
+      if (!specCanvas) {
+        console.error('Spectrogram canvas not found! Trying again in 500ms...');
+        // Try again after a short delay
+        setTimeout(() => {
+          const canvasRetry = document.querySelector('#spectrogram canvas');
+          if (canvasRetry) {
+            initializeAnnotoriousOnCanvas(canvasRetry);
+          } else {
+            console.error('Spectrogram canvas still not found after retry!');
+          }
+        }, 500);
+        return;
+      }
+      
+      initializeAnnotoriousOnCanvas(specCanvas);
+    }, 100);
+  }
+  
+  function initializeAnnotoriousOnCanvas(canvas) {
+    try {
+      annotorious = Annotorious.init({
+        image: canvas,
+        widgets: [
+          {
+            widget: 'TAG',
+            vocabulary: ['normal', 'warning', 'critical', 'unknown']
+          }
+        ]
+      });
+
+      // Bind annotation events
+      annotorious.on('createAnnotation', handleAnnotationChange);
+      annotorious.on('updateAnnotation', handleAnnotationChange);
+      annotorious.on('deleteAnnotation', handleAnnotationChange);
+
+      // Restore annotations if any
+      annotorious.setAnnotations(currentAnnotations);
+    } catch (error) {
+      console.error('Error initializing Annotorious:', error);
     }
-
-    annotorious = Annotorious.init({
-      image: specCanvas,
-      widgets: [
-        {
-          widget: 'TAG',
-          vocabulary: ['normal', 'warning', 'critical', 'unknown']
-        }
-      ]
-    });
-
-    // Bind annotation events
-    annotorious.on('createAnnotation', handleAnnotationChange);
-    annotorious.on('updateAnnotation', handleAnnotationChange);
-    annotorious.on('deleteAnnotation', handleAnnotationChange);
-
-    // Restore annotations if any
-    annotorious.setAnnotations(currentAnnotations);
   }
 
   // ---------------- Event Handlers & Logic ----------------
@@ -361,6 +388,113 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (keyMap[e.code]) keyMap[e.code]();
   });
+
+  // ---------------- File Upload Functionality ----------------
+  const uploadBtn = document.getElementById('upload-btn');
+  const fileUpload = document.getElementById('file-upload');
+  
+  uploadBtn?.addEventListener('click', () => {
+    fileUpload.click(); // Trigger the hidden file input
+  });
+
+  fileUpload?.addEventListener('change', async (e) => {
+    const files = Array.from(e.target.files);
+    
+    if (files.length === 0) return;
+    
+    // Show a confirmation dialog for multiple files
+    if (files.length > 1) {
+      const confirmMsg = `정말 ${files.length}개의 파일을 업로드 하시겠습니까?`;
+      if (!confirm(confirmMsg)) return;
+    }
+    
+    // Process each file
+    for (const file of files) {
+      if (!file.type.startsWith('audio/')) {
+        alert(`${file.name}은(는) 오디오 파일이 아닙니다.`);
+        continue;
+      }
+      
+      await uploadFile(file);
+    }
+    
+    // Reset the file input
+    fileUpload.value = '';
+    
+    // Refresh the queue to show the newly uploaded files
+    await fetchQueue();
+  });
+
+  async function uploadFile(file) {
+    const formData = new FormData();
+    formData.append('audio_file', file);
+    formData.append('original_filename', file.name);
+    
+    try {
+      const response = await fetch('/api/labeling/upload', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: formData
+      });
+      
+      const result = await response.json();
+      
+      if (response.ok) {
+        console.log(`File ${file.name} uploaded successfully:`, result);
+        // Optionally show a success notification
+        showNotification(`${file.name} 파일이 성공적으로 업로드되었습니다.`, 'success');
+      } else {
+        console.error(`Error uploading ${file.name}:`, result.error);
+        showNotification(`${file.name} 업로드 실패: ${result.error}`, 'error');
+      }
+    } catch (error) {
+      console.error(`Exception uploading ${file.name}:`, error);
+      showNotification(`${file.name} 업로드 중 오류 발생`, 'error');
+    }
+  }
+  
+  function showNotification(message, type = 'info') {
+    // Simple notification system - could be enhanced with a proper notification library
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+    
+    Object.assign(notification.style, {
+      position: 'fixed',
+      top: '20px',
+      right: '20px',
+      padding: '12px 20px',
+      borderRadius: '8px',
+      color: 'white',
+      zIndex: '10000',
+      maxWidth: '400px',
+      wordWrap: 'break-word'
+    });
+    
+    // Set background color based on type
+    switch(type) {
+      case 'success':
+        notification.style.backgroundColor = '#48bb78';
+        break;
+      case 'error':
+        notification.style.backgroundColor = '#ef4444';
+        break;
+      case 'warning':
+        notification.style.backgroundColor = '#ed8936';
+        break;
+      default:
+        notification.style.backgroundColor = '#38bdf8';
+    }
+    
+    document.body.appendChild(notification);
+    
+    // Remove notification after 5 seconds
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.parentNode.removeChild(notification);
+      }
+    }, 5000);
+  }
 
   // ---------------- Initial Load ----------------
   initWavesurfer();
