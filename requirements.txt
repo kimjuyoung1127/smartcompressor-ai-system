@@ -10,15 +10,19 @@ scipy>=1.11.0
 # 오디오 처리
 librosa>=0.10.0
 soundfile>=0.12.0
+tensorflow-hub>=0.15.0  # 오픈소스 사전 훈련 모델 (YAMNet)
 
 # 시각화 및 GUI
 matplotlib>=3.7.0
 seaborn>=0.12.0
 streamlit>=1.28.0
+Pillow>=10.0.0
 
 # 웹 프레임워크 (기존 시스템과의 호환성)
 flask>=2.3.0
 flask-cors>=4.0.0
+aiohttp>=3.9.0  # 비동기 HTTP 클라이언트
+schedule>=1.2.0  # 스케줄링 라이브러리
 fastapi>=0.104.0
 uvicorn>=0.24.0
 
@@ -28,11 +32,13 @@ plotly>=5.17.0
 # API 및 인증
 python-multipart>=0.0.6
 pyjwt>=2.8.0
+bcrypt>=4.0.0  # 비밀번호 해싱
 requests>=2.31.0
 
 # 데이터베이스 및 설정
 python-dotenv>=1.0.0
 supabase>=2.0.0
+psycopg2-binary>=2.9.9  # PostgreSQL 지원 (선택적)
 
 # 시스템 및 프로세스 관리
 psutil>=5.9.0

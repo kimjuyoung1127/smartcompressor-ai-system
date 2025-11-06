@@ -1,0 +1,57 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{{ report_name }} - {{ date }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .header { background: #2c3e50; color: white; padding: 20px; text-align: center; }
+        .summary { background: #ecf0f1; padding: 20px; margin: 20px 0; }
+        .metric { display: inline-block; margin: 10px; padding: 15px; background: white; border-radius: 5px; }
+        .chart { margin: 20px 0; text-align: center; }
+        .insights { background: #e8f5e8; padding: 15px; margin: 20px 0; }
+        .recommendations { background: #fff3cd; padding: 15px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{ report_name }}</h1>
+        <p>생성일: {{ date }}</p>
+    </div>
+    
+    <div class="summary">
+        <h2>요약</h2>
+        {% for metric in summary_metrics %}
+        <div class="metric">
+            <h3>{{ metric.name }}</h3>
+            <p>{{ metric.value }}</p>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <div class="chart">
+        <h3>매출 트렌드</h3>
+        <img src="data:image/png;base64,{{ revenue_chart }}" alt="매출 트렌드">
+    </div>
+    
+    <div class="insights">
+        <h3>주요 인사이트</h3>
+        <ul>
+            {% for insight in insights %}
+            <li>{{ insight }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    
+    <div class="recommendations">
+        <h3>권장사항</h3>
+        <ul>
+            {% for recommendation in recommendations %}
+            <li>{{ recommendation }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+</body>
+</html>
+            

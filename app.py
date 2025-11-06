@@ -2,10 +2,15 @@
 
 
 import os
+import logging
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 from dotenv import load_dotenv
 from routes.kakao_auth_routes import kakao_auth_bp
+
+# 로깅 설정
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # .env 파일 로드
 load_dotenv()
@@ -26,6 +31,8 @@ from routes.dashboard_routes import dashboard_bp
 from routes.mobile_app_routes import mobile_app_bp
 from routes.analytics_routes import analytics_bp
 from routes.customer_routes import customer_bp
+from routes.smart_detection_routes import smart_bp
+from routes.pending_labeling_routes import pending_bp
 from admin.routes.admin_routes import admin_bp
 from models.database import init_db
 
@@ -54,22 +61,32 @@ def create_app():
     # 데이터베이스 초기화
     init_db()
 
-    # Sentry 초기화
-    import sentry_sdk
-    from sentry_sdk.integrations.flask import FlaskIntegration
-    from sentry_sdk.integrations.redis import RedisIntegration
+    # Sentry 초기화 (선택적)
+    try:
+        import sentry_sdk
+        from sentry_sdk.integrations.flask import FlaskIntegration
+        from sentry_sdk.integrations.redis import RedisIntegration
 
-    sentry_sdk.init(
-        dsn=os.getenv('SENTRY_DSN'),
-        integrations=[
-            FlaskIntegration(),
-            RedisIntegration(),  # Celery 사용 시 필요
-        ],
-        traces_sample_rate=1.0,
-        profiles_sample_rate=1.0,
-        environment=os.getenv('FLASK_ENV', 'production'),
-        release=os.getenv('APP_VERSION', 'unknown')
-    )
+        sentry_dsn = os.getenv('SENTRY_DSN')
+        if sentry_dsn:
+            sentry_sdk.init(
+                dsn=sentry_dsn,
+                integrations=[
+                    FlaskIntegration(),
+                    RedisIntegration(),  # Celery 사용 시 필요
+                ],
+                traces_sample_rate=1.0,
+                profiles_sample_rate=1.0,
+                environment=os.getenv('FLASK_ENV', 'production'),
+                release=os.getenv('APP_VERSION', 'unknown')
+            )
+            logger.info("Sentry 초기화 완료")
+        else:
+            logger.info("Sentry DSN이 설정되지 않아 Sentry를 건너뜁니다.")
+    except ImportError:
+        logger.warning("sentry_sdk가 설치되지 않아 Sentry를 건너뜁니다.")
+    except Exception as e:
+        logger.warning(f"Sentry 초기화 실패 (무시): {e}")
 
     # CORS 설정
     # origins를 명확히 지정하여 보안 강화
@@ -116,6 +133,10 @@ def create_app():
     app.register_blueprint(analytics_bp)
     # 커스터머 라우트 등록
     app.register_blueprint(customer_bp)
+    # 스마트 판단 라우트 등록 (실시간 판단 + 보류 라벨링)
+    app.register_blueprint(smart_bp)
+    # 보류 라벨링 라우트 등록 (대시보드용)
+    app.register_blueprint(pending_bp)
 
     # 정적 파일 서빙을 위한 라우트 추가 (dashboard-components)
     @app.route('/static/dashboard-components/<path:filename>')

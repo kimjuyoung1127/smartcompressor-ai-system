@@ -240,6 +240,7 @@ class BackupRecoveryService:
     def _execute_scheduled_backup(self, schedule: BackupSchedule):
         """스케줄된 백업 실행"""
         try:
+            current_time = datetime.now()
             backup_name = f"{schedule.name}_{current_time.strftime('%Y%m%d_%H%M%S')}"
             self.create_backup(backup_name, schedule.backup_type)
         except Exception as e:

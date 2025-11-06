@@ -1,61 +1,36 @@
 #!/bin/bash
 # 서버 상태 확인 스크립트
 
-echo "🔍 Signalcraft 서버 상태 확인 시작..."
-
-# 1. 서버 IP와 도메인 확인
-echo "📋 서버 정보:"
-echo "  - 도메인: signalcraft.kr"
-echo "  - IP: 3.39.124.0"
-echo "  - 포트: 3000 (Node.js), 80/443 (Nginx)"
-
-# 2. 로컬 서버 상태 확인
+echo "=========================================="
+echo "서버 상태 확인"
+echo "=========================================="
 echo ""
-echo "🌐 로컬 서버 상태:"
-if curl -s http://localhost:3000 > /dev/null; then
-    echo "✅ 로컬 Node.js 서버 (포트 3000) - 정상"
+
+# 1. 포트 5000에서 실행 중인 프로세스 확인
+echo "1. 포트 5000에서 실행 중인 프로세스:"
+netstat -tuln | grep 5000 || echo "포트 5000에서 실행 중인 프로세스 없음"
+echo ""
+
+# 2. 서버 응답 확인
+echo "2. 서버 응답 테스트:"
+if command -v curl &> /dev/null; then
+    curl -s -o /dev/null -w "HTTP Status: %{http_code}\n" http://localhost:5000/api/esp32/realtime/statistics || echo "서버 응답 없음"
 else
-    echo "❌ 로컬 Node.js 서버 (포트 3000) - 응답 없음"
+    echo "curl이 설치되지 않았습니다. wget으로 시도..."
+    wget -q -O /dev/null -S http://localhost:5000/api/esp32/realtime/statistics 2>&1 | head -1 || echo "서버 응답 없음"
 fi
-
-# 3. 외부 서버 상태 확인
 echo ""
-echo "🌍 외부 서버 상태:"
-if curl -s -I https://signalcraft.kr > /dev/null; then
-    echo "✅ HTTPS (signalcraft.kr) - 정상"
-else
-    echo "❌ HTTPS (signalcraft.kr) - 502 에러"
-fi
 
-if curl -s -I http://signalcraft.kr > /dev/null; then
-    echo "✅ HTTP (signalcraft.kr) - 정상"
-else
-    echo "❌ HTTP (signalcraft.kr) - 응답 없음"
-fi
-
-# 4. 포트 확인
+# 3. WSL IP 주소 확인
+echo "3. WSL IP 주소:"
+ip addr show eth0 | grep 'inet ' | awk '{print $2}' | cut -d/ -f1 || hostname -i || echo "IP 주소를 확인할 수 없습니다"
 echo ""
-echo "🔌 포트 사용 상태:"
-netstat -tlnp | grep -E ":(3000|80|443)" 2>/dev/null || echo "포트 확인 권한 없음"
 
-# 5. PM2 상태 확인 (로컬)
+# 4. Python 프로세스 확인
+echo "4. Python 프로세스 확인:"
+ps aux | grep -E "python.*start_server|python.*app.py|flask" | grep -v grep || echo "Python 서버 프로세스 없음"
 echo ""
-echo "📊 PM2 상태:"
-if command -v pm2 &> /dev/null; then
-    pm2 status
-else
-    echo "PM2가 설치되어 있지 않습니다."
-fi
 
-# 6. Nginx 상태 확인 (로컬)
-echo ""
-echo "🔧 Nginx 상태:"
-if command -v nginx &> /dev/null; then
-    nginx -t 2>&1
-    systemctl status nginx 2>/dev/null || echo "Nginx 상태 확인 권한 없음"
-else
-    echo "Nginx가 설치되어 있지 않습니다."
-fi
-
-echo ""
-echo "✅ 서버 상태 확인 완료!"
+echo "=========================================="
+echo "확인 완료"
+echo "=========================================="

@@ -169,7 +169,8 @@ class LogManagementService:
             pattern=r"unauthorized|forbidden|security|attack|hack|injection",
             description="보안 관련 로그 패턴",
             severity=LogLevel.WARNING,
-            category="security"
+            category="security",
+            created_at=datetime.now()
         )
         
         # 성능 패턴
@@ -179,7 +180,8 @@ class LogManagementService:
             pattern=r"slow|timeout|latency|performance|memory|cpu",
             description="성능 관련 로그 패턴",
             severity=LogLevel.INFO,
-            category="performance"
+            category="performance",
+            created_at=datetime.now()
         )
         
         # 데이터베이스 패턴
@@ -189,7 +191,8 @@ class LogManagementService:
             pattern=r"database|sql|query|connection|transaction",
             description="데이터베이스 관련 로그 패턴",
             severity=LogLevel.INFO,
-            category="database"
+            category="database",
+            created_at=datetime.now()
         )
         
         # API 패턴
@@ -199,7 +202,8 @@ class LogManagementService:
             pattern=r"api|endpoint|request|response|http",
             description="API 관련 로그 패턴",
             severity=LogLevel.INFO,
-            category="api"
+            category="api",
+            created_at=datetime.now()
         )
     
     def _start_log_monitoring(self):

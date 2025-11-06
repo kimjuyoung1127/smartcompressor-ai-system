@@ -1,0 +1,14 @@
+[
+  {
+    "version": "1.0.0",
+    "build_number": 1,
+    "release_date": "2025-11-06",
+    "file_path": "data/firmware/firmware_v1.0.0.bin",
+    "file_size": 0,
+    "checksum": "",
+    "changelog": "Initial firmware release",
+    "is_stable": true,
+    "min_hardware_version": "ESP32_v1",
+    "max_hardware_version": "ESP32_v1"
+  }
+]

@@ -1,0 +1,55 @@
+
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>{{ subject }}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                        .header { background: #28a745; color: white; padding: 20px; text-align: center; }
+                        .content { padding: 20px; background: #f8f9fa; }
+                        .order-info { background: white; padding: 20px; border-radius: 5px; margin: 15px 0; }
+                        .order-item { border-bottom: 1px solid #eee; padding: 10px 0; }
+                        .order-item:last-child { border-bottom: none; }
+                        .total { font-size: 18px; font-weight: bold; color: #28a745; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <h1>새로운 주문</h1>
+                            <p>주문 번호: {{ order_number }}</p>
+                        </div>
+                        <div class="content">
+                            <div class="order-info">
+                                <h3>주문 정보</h3>
+                                <p><strong>고객명:</strong> {{ customer_name }}</p>
+                                <p><strong>연락처:</strong> {{ customer_phone }}</p>
+                                <p><strong>주문 시간:</strong> {{ order_time }}</p>
+                                <p><strong>주문 상태:</strong> {{ order_status }}</p>
+                            </div>
+                            
+                            <div class="order-info">
+                                <h3>주문 내역</h3>
+                                {% for item in order_items %}
+                                <div class="order-item">
+                                    <strong>{{ item.name }}</strong> x {{ item.quantity }}<br>
+                                    <span style="color: #666;">{{ item.options }}</span><br>
+                                    <span class="total">₩{{ item.total_price | format_currency }}</span>
+                                </div>
+                                {% endfor %}
+                                
+                                <div style="border-top: 2px solid #28a745; padding-top: 15px; margin-top: 15px;">
+                                    <p><strong>총 금액: ₩{{ total_amount | format_currency }}</strong></p>
+                                </div>
+                            </div>
+                            
+                            <p style="text-align: center; margin: 30px 0;">
+                                <a href="{{ order_url }}" style="background: #28a745; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px;">주문 확인하기</a>
+                            </p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+                

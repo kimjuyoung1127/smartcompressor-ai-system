@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 실시간 모니터링 대시보드</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #f5f7fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .status-card {
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        .status-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .status-no-input {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .status-auto {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: white;
+        }
+        .status-pending {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+        .status-failure {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            color: white;
+        }
+        .decibel-meter {
+            height: 60px;
+            background: #e9ecef;
+            border-radius: 30px;
+            position: relative;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+        .decibel-fill {
+            height: 100%;
+            border-radius: 30px;
+            transition: width 0.3s, background 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .decibel-low {
+            background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+        }
+        .decibel-medium {
+            background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
+        }
+        .decibel-high {
+            background: linear-gradient(90deg, #fa709a 0%, #fee140 100%);
+        }
+        .decibel-danger {
+            background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%);
+        }
+        .realtime-log {
+            max-height: 400px;
+            overflow-y: auto;
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        .log-entry {
+            padding: 8px;
+            margin-bottom: 5px;
+            border-left: 3px solid;
+            border-radius: 4px;
+            background: #f8f9fa;
+        }
+        .log-no-input {
+            border-color: #667eea;
+        }
+        .log-auto {
+            border-color: #43e97b;
+        }
+        .log-pending {
+            border-color: #f5576c;
+        }
+        .log-failure {
+            border-color: #fa709a;
+        }
+        .stat-box {
+            text-align: center;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .stat-label {
+            color: #6c757d;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        .device-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        .status-indicator.online {
+            background: #43e97b;
+        }
+        .status-indicator.offline {
+            background: #dc3545;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid mt-4">
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="mb-0">
+                            <i class="fas fa-microphone-alt"></i> ESP32 실시간 모니터링
+                        </h1>
+                        <p class="text-muted">실시간 소리 분석 및 고장 판단 시스템</p>
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <label for="device-select" class="mb-0"><strong>디바이스 선택:</strong></label>
+                        <select id="device-select" class="form-select" style="width: 200px;" onchange="changeDevice()">
+                            <option value="ESP32_001" selected>ESP32_001</option>
+                            <option value="ESP32_002">ESP32_002</option>
+                            <option value="ESP32_003">ESP32_003</option>
+                            <option value="ESP32_004">ESP32_004</option>
+                            <option value="ESP32_005">ESP32_005</option>
+                        </select>
+                        <button class="btn btn-sm btn-outline-primary" onclick="refreshDeviceList()">
+                            <i class="fas fa-sync-alt"></i> 새로고침
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 통계 카드 -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stat-box">
+                    <div class="stat-number" id="total-detections">0</div>
+                    <div class="stat-label">총 판단</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-box">
+                    <div class="stat-number" id="auto-count" style="color: #43e97b;">0</div>
+                    <div class="stat-label">자동 판단</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-box">
+                    <div class="stat-number" id="pending-count" style="color: #f5576c;">0</div>
+                    <div class="stat-label">보류 항목</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-box">
+                    <div class="stat-number" id="failure-count" style="color: #fa709a;">0</div>
+                    <div class="stat-label">고장 감지</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 현재 상태 -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="status-card" id="current-status-card">
+                    <div class="device-status">
+                        <div class="status-indicator online" id="connection-indicator"></div>
+                        <h5 class="mb-0">현재 상태</h5>
+                    </div>
+                    <div class="mt-3">
+                        <div class="mb-2">
+                            <strong>디바이스:</strong> <span id="current-device">ESP32_001</span>
+                        </div>
+                        <div class="mb-2">
+                            <strong>상태:</strong> <span id="current-status">대기 중...</span>
+                        </div>
+                        <div class="mb-2">
+                            <strong>데시벨:</strong> <span id="current-decibel">-</span> dB
+                        </div>
+                        <div class="mb-3">
+                            <strong>메시지:</strong> <span id="current-message">데이터 대기 중...</span>
+                        </div>
+                        <div class="decibel-meter">
+                            <div class="decibel-fill" id="decibel-fill" style="width: 0%;">
+                                <span id="decibel-text">0 dB</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-info-circle"></i> 판단 기준</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="fas fa-circle" style="color: #667eea;"></i>
+                                <strong>35~40 dB:</strong> 소리 입력 없음
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-circle" style="color: #6c757d;"></i>
+                                <strong>40~48 dB:</strong> 판단 임계값 미달
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-circle" style="color: #43e97b;"></i>
+                                <strong>48 dB 이상:</strong> 알고리즘 판단 시작
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-circle" style="color: #f5576c;"></i>
+                                <strong>신뢰도 < 70%:</strong> 보류 큐 추가
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 실시간 로그 -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-stream"></i> 실시간 로그</h5>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="clearLog()">
+                            <i class="fas fa-trash"></i> 지우기
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="realtime-log" id="realtime-log">
+                            <div class="log-entry">시스템 초기화 완료. ESP32 데이터 대기 중...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const API_BASE = '/api/esp32/realtime';
+        let logEntries = [];
+        let currentDeviceId = 'ESP32_001';
+        let stats = {
+            total: 0,
+            auto: 0,
+            pending: 0,
+            failure: 0
+        };
+        
+        // 데시벨 레벨에 따른 색상 결정
+        function getDecibelColor(db) {
+            if (db < 40) return 'decibel-low';
+            if (db < 48) return 'decibel-medium';
+            if (db < 60) return 'decibel-high';
+            return 'decibel-danger';
+        }
+        
+        // 상태에 따른 카드 클래스 결정
+        function getStatusCardClass(status) {
+            switch(status) {
+                case 'no_input': return 'status-no-input';
+                case 'auto': return 'status-auto';
+                case 'pending': return 'status-pending';
+                case 'error': return 'status-failure';
+                default: return 'status-card';
+            }
+        }
+        
+        // 로그 추가
+        function addLogEntry(status, message, decibel, timestamp) {
+            const logDiv = document.getElementById('realtime-log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${status}`;
+            
+            const time = new Date(timestamp).toLocaleTimeString('ko-KR');
+            entry.innerHTML = `
+                <strong>[${time}]</strong> 
+                <span class="badge bg-${status === 'auto' ? 'success' : status === 'pending' ? 'warning' : 'secondary'}">${status.toUpperCase()}</span>
+                ${decibel ? `${decibel.toFixed(1)} dB` : ''} - ${message}
+            `;
+            
+            logDiv.insertBefore(entry, logDiv.firstChild);
+            logEntries.push({status, message, decibel, timestamp});
+            
+            // 최근 100개만 유지
+            if (logEntries.length > 100) {
+                logDiv.removeChild(logDiv.lastChild);
+                logEntries.shift();
+            }
+        }
+        
+        // 현재 상태 업데이트
+        function updateCurrentStatus(result) {
+            const status = result.status;
+            const decibel = result.decibel_level || 0;
+            const message = result.message || '';
+            const device = result.device_id || currentDeviceId;
+            
+            // 상태 카드 업데이트
+            const statusCard = document.getElementById('current-status-card');
+            statusCard.className = `status-card ${getStatusCardClass(status)}`;
+            
+            // 디바이스 ID 업데이트 (선택된 디바이스와 일치하는지 확인)
+            document.getElementById('current-device').textContent = device;
+            
+            // 선택 박스도 업데이트 (디바이스가 목록에 있으면)
+            const select = document.getElementById('device-select');
+            if (Array.from(select.options).some(opt => opt.value === device)) {
+                select.value = device;
+                currentDeviceId = device;
+            }
+            document.getElementById('current-status').textContent = 
+                status === 'no_input' ? '소리 입력 없음' :
+                status === 'below_threshold' ? '임계값 미달' :
+                status === 'auto' ? '자동 판단 완료' :
+                status === 'pending' ? '보류 큐 추가' :
+                status === 'error' ? '오류' : '대기 중';
+            
+            document.getElementById('current-decibel').textContent = decibel.toFixed(1);
+            document.getElementById('current-message').textContent = message;
+            
+            // 데시벨 미터 업데이트
+            const decibelFill = document.getElementById('decibel-fill');
+            const decibelText = document.getElementById('decibel-text');
+            
+            // 0-80 dB 범위로 표시
+            const percentage = Math.min((decibel / 80) * 100, 100);
+            decibelFill.style.width = percentage + '%';
+            decibelFill.className = `decibel-fill ${getDecibelColor(decibel)}`;
+            decibelText.textContent = `${decibel.toFixed(1)} dB`;
+            
+            // 통계 업데이트
+            if (status === 'auto' || status === 'pending') {
+                stats.total++;
+                if (status === 'auto') stats.auto++;
+                if (status === 'pending') stats.pending++;
+                if (result.result && result.result.result && result.result.result.is_failure) {
+                    stats.failure++;
+                }
+                updateStatistics();
+            }
+        }
+        
+        // 통계 업데이트
+        function updateStatistics() {
+            document.getElementById('total-detections').textContent = stats.total;
+            document.getElementById('auto-count').textContent = stats.auto;
+            document.getElementById('pending-count').textContent = stats.pending;
+            document.getElementById('failure-count').textContent = stats.failure;
+        }
+        
+        // 서버 통계 조회
+        async function loadStatistics() {
+            try {
+                const response = await fetch(`${API_BASE}/statistics`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    stats = {
+                        total: data.statistics.total_detections || 0,
+                        auto: data.statistics.auto_count || 0,
+                        pending: data.statistics.pending_count || 0,
+                        failure: data.statistics.failure_count || 0
+                    };
+                    updateStatistics();
+                }
+            } catch (error) {
+                console.error('통계 조회 실패:', error);
+            }
+        }
+        
+        // 로그 지우기
+        function clearLog() {
+            document.getElementById('realtime-log').innerHTML = '';
+            logEntries = [];
+        }
+        
+        // 디바이스 변경
+        function changeDevice() {
+            const select = document.getElementById('device-select');
+            currentDeviceId = select.value;
+            document.getElementById('current-device').textContent = currentDeviceId;
+            addLogEntry('auto', `디바이스 변경: ${currentDeviceId}`, null, new Date().toISOString());
+            loadStatistics();
+        }
+        
+        // 디바이스 목록 새로고침
+        async function refreshDeviceList() {
+            try {
+                // 실제로는 API에서 디바이스 목록을 가져올 수 있음
+                // 현재는 하드코딩된 목록 사용
+                addLogEntry('auto', '디바이스 목록 새로고침 완료', null, new Date().toISOString());
+            } catch (error) {
+                console.error('디바이스 목록 새로고침 실패:', error);
+            }
+        }
+        
+        // 테스트 데이터 전송 (실제 ESP32에서는 이 함수를 사용하지 않음)
+        async function sendTestData(audioData, decibelLevel, deviceId = null) {
+            const targetDeviceId = deviceId || currentDeviceId;
+            try {
+                const response = await fetch(`${API_BASE}/detect`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        audio_data: audioData,
+                        decibel_level: decibelLevel,
+                        device_id: targetDeviceId,
+                        sample_rate: 16000
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    updateCurrentStatus(result);
+                    addLogEntry(
+                        result.status,
+                        result.message,
+                        result.decibel_level,
+                        result.timestamp || new Date().toISOString()
+                    );
+                }
+                
+                return result;
+            } catch (error) {
+                console.error('데이터 전송 실패:', error);
+                addLogEntry('error', `전송 오류: ${error.message}`, null, new Date().toISOString());
+            }
+        }
+        
+        // 초기화
+        loadStatistics();
+        setInterval(loadStatistics, 10000);  // 10초마다 통계 갱신
+        
+        // 테스트용: 더미 데이터 생성 (실제로는 ESP32에서 전송)
+        console.log('ESP32 실시간 모니터링 대시보드 초기화 완료');
+        console.log('실제 ESP32 데이터를 받으려면 sendTestData() 함수를 ESP32 연동 코드로 교체하세요.');
+    </script>
+</body>
+</html>
+
