@@ -1,7 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
-const DatabaseService = require('../../services/database_service');
-const { authenticateSession } = require('../middleware/auth');
+const DatabaseService = require('../../../services/database_service');
+const { authenticateSession } = require('../../middleware/auth');
 
 const router = express.Router();
 const db = new DatabaseService();

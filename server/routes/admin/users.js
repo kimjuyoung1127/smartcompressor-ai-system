@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const DatabaseService = require('../../services/database_service');
-const { requireAdmin } = require('../middleware/rbac');
-const { authenticateSession } = require('../middleware/auth');
+const DatabaseService = require('../../../services/database_service');
+const { requireAdmin } = require('../../middleware/rbac');
+const { authenticateSession } = require('../../middleware/auth');
 
 const db = new DatabaseService();
 

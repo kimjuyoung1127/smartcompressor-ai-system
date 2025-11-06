@@ -7,8 +7,8 @@ const express = require('express');
 const router = express.Router();
 const path = require('path');
 const fs = require('fs');
-const { requireLabeler } = require('../middleware/rbac');
-const DatabaseService = require('../../services/database_service');
+const { requireLabeler } = require('../../middleware/rbac');
+const DatabaseService = require('../../../services/database_service');
 const multer = require('multer');
 
 const db = new DatabaseService();
