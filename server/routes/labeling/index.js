@@ -272,7 +272,6 @@ router.post('/save', [authenticateSession, requireLabeler], async (req, res) => 
         // audio_file_id로 file_name을 조회
         const client = await db.pool.connect();
         try {
-            // audio_files에서 파일 이름을 가져옴
             const fileResult = await client.query(
                 'SELECT file_name FROM audio_files WHERE id = $1',
                 [labelData.audio_file_id]
@@ -287,30 +286,48 @@ router.post('/save', [authenticateSession, requireLabeler], async (req, res) => 
 
             const fileName = fileResult.rows[0].file_name;
 
-            // 레이블 저장
-            const insertResult = await client.query(`
-                INSERT INTO labels (file_name, label, confidence, labeler_id, metadata)
-                VALUES ($1, $2, $3, $4, $5)
-                ON CONFLICT (file_name) 
-                DO UPDATE SET 
-                    label = EXCLUDED.label,
-                    confidence = EXCLUDED.confidence,
-                    labeler_id = EXCLUDED.labeler_id,
-                    metadata = EXCLUDED.metadata,
-                    updated_at = CURRENT_TIMESTAMP
-                RETURNING *
-            `, [
-                fileName,
-                labelData.label || 'unknown',
-                labelData.confidence || 50,
-                req.user.userId,
-                JSON.stringify(labelData.annotations || [])
-            ]);
+            // Check if a label for this file already exists
+            const existingLabelResult = await client.query(
+                'SELECT id FROM labels WHERE file_name = $1',
+                [fileName]
+            );
+
+            let savedLabel;
+            if (existingLabelResult.rows.length > 0) {
+                // Update existing label
+                const updateResult = await client.query(`
+                    UPDATE labels 
+                    SET label = $1, confidence = $2, labeler_id = $3, metadata = $4, updated_at = CURRENT_TIMESTAMP
+                    WHERE file_name = $5
+                    RETURNING *
+                `, [
+                    labelData.label || 'unknown',
+                    labelData.confidence || 50,
+                    req.user.userId,
+                    JSON.stringify(labelData.annotations || []),
+                    fileName
+                ]);
+                savedLabel = updateResult.rows[0];
+            } else {
+                // Insert new label
+                const insertResult = await client.query(`
+                    INSERT INTO labels (file_name, label, confidence, labeler_id, metadata)
+                    VALUES ($1, $2, $3, $4, $5)
+                    RETURNING *
+                `, [
+                    fileName,
+                    labelData.label || 'unknown',
+                    labelData.confidence || 50,
+                    req.user.userId,
+                    JSON.stringify(labelData.annotations || [])
+                ]);
+                savedLabel = insertResult.rows[0];
+            }
 
             res.json({ 
                 success: true, 
                 message: '라벨이 성공적으로 저장되었습니다.',
-                data: insertResult.rows[0]
+                data: savedLabel
             });
         } finally {
             client.release();
