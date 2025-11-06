@@ -144,6 +144,58 @@ router.get('/audio/:fileId', [authenticateSession, requireLabeler], async (req, 
     }
 });
 
+// 오디오 파일 삭제
+router.delete('/audio/:fileId', [authenticateSession, requireLabeler], async (req, res) => {
+    try {
+        const fileId = req.params.fileId;
+        const client = await db.pool.connect();
+        try {
+            // 먼저 파일 정보를 가져옴
+            const fileResult = await client.query(
+                'SELECT file_name, file_path FROM audio_files WHERE id = $1',
+                [fileId]
+            );
+            
+            if (fileResult.rows.length === 0) {
+                return res.status(404).json({ error: 'Audio file not found' });
+            }
+            
+            const { file_name, file_path } = fileResult.rows[0];
+            
+            // 관련 레이블 삭제
+            await client.query('DELETE FROM labels WHERE file_name = $1', [file_name]);
+            
+            // 오디오 파일 레코드 삭제
+            await client.query('DELETE FROM audio_files WHERE id = $1', [fileId]);
+            
+            // 실제 파일이 존재하면 삭제
+            if (fs.existsSync(file_path)) {
+                fs.unlinkSync(file_path);
+            }
+            
+            // 관련 피크스 파일도 삭제 (존재할 경우)
+            const peaksDir = path.join(__dirname, '../../data/peaks_cache');
+            const peaksFile = path.join(peaksDir, `${path.basename(file_path, path.extname(file_path))}.json`);
+            if (fs.existsSync(peaksFile)) {
+                fs.unlinkSync(peaksFile);
+            }
+            
+            res.json({ 
+                success: true, 
+                message: 'Audio file and associated data deleted successfully' 
+            });
+        } finally {
+            client.release();
+        }
+    } catch (error) {
+        console.error('오디오 파일 삭제 오류:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: '오디오 파일 삭제 중 오류가 발생했습니다.' 
+        });
+    }
+});
+
 // 피크스 데이터 제공 (audiowaveform 생성)
 router.get('/peaks/:fileId', [authenticateSession, requireLabeler], async (req, res) => {
     try {

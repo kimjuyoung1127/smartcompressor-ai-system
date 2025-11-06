@@ -244,3 +244,55 @@ def save_label_data(file_id, labeler_id, data):
         return False, f"Database error: {str(e)}"
     finally:
         conn.close()
+
+
+def delete_audio_file(file_id, user_id):
+    """
+    Deletes an audio file and its associated data from the database and filesystem.
+    """
+    conn = get_db_connection()
+    if not conn:
+        return False, "Could not connect to database."
+    
+    try:
+        with conn.cursor() as cursor:
+            # Get file information before deletion
+            cursor.execute("SELECT file_name, file_path FROM audio_files WHERE id = %s", (file_id,))
+            result = cursor.fetchone()
+            if not result:
+                return False, "Audio file not found in database."
+            
+            file_name, file_path = result
+            
+            # Delete associated label data
+            cursor.execute("DELETE FROM labels WHERE file_name = %s", (file_name,))
+            
+            # Delete the audio file record
+            cursor.execute("DELETE FROM audio_files WHERE id = %s", (file_id,))
+            
+            conn.commit()
+            
+            # Delete the actual file from the filesystem if it exists
+            if file_path and os.path.exists(file_path):
+                os.remove(file_path)
+                print(f"File {file_path} deleted from filesystem")
+            
+            # Also delete associated peaks file if it exists
+            peaks_filename = f"{os.path.splitext(file_name)[0]}.json"
+            peaks_filepath = os.path.join(PEAKS_CACHE_PATH, peaks_filename)
+            if os.path.exists(peaks_filepath):
+                os.remove(peaks_filepath)
+                print(f"Peaks file {peaks_filepath} deleted from filesystem")
+            
+            print(f"File ID {file_id} deleted from database")
+            return True, "Audio file and associated data deleted successfully."
+    except psycopg2.Error as e:
+        print(f"Database error deleting file: {e}")
+        conn.rollback()
+        return False, f"Database error: {str(e)}"
+    except Exception as e:
+        print(f"Error deleting file from filesystem: {e}")
+        conn.rollback()
+        return False, f"Filesystem error: {str(e)}"
+    finally:
+        conn.close()

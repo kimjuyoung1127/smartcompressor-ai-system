@@ -113,6 +113,23 @@
     .status-badge { padding:3px 8px; border-radius:999px; font-size:11px; border:1px solid var(--border-color); }
     .status-badge.processed { background: rgba(72,187,120,.12); color: var(--success); }
     .status-badge.not-processed { background: rgba(237,137,54,.12); color: var(--warning); }
+    .delete-btn {
+      background: var(--danger);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      margin-left: 8px;
+      font-size: 12px;
+    }
+    .delete-btn:hover {
+      opacity: 0.8;
+    }
 
     /* ---------- Right: tools ---------- */
     .label-section h4 { margin:8px 0; }
@@ -175,6 +192,7 @@
             <option value="done">완료</option>
           </select>
           <button id="upload-btn" class="chip" title="오디오 파일 업로드"><i class="fa-solid fa-upload"></i> 파일 업로드</button>
+          <button id="refresh-btn" class="chip" title="목록 새로고침"><i class="fa-solid fa-sync-alt"></i></button>
           <input type="file" id="file-upload" accept=".wav,.mp3,.flac,.m4a" style="display: none;" multiple>
         </div>
         <ul id="queue" class="file-list" role="listbox" aria-label="파일 목록">

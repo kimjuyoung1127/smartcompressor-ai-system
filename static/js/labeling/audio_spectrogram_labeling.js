@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
     undoBtn: document.getElementById('undo-btn'),
     redoBtn: document.getElementById('redo-btn'),
     autosaveDot: document.getElementById('autosave-dot'),
+    refreshBtn: document.getElementById('refresh-btn'),
   };
 
   // ---------------- Auth Helper ----------------
@@ -249,26 +250,108 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Function to delete a file
+  async function deleteFile(fileId, fileName) {
+    if (!confirm(`정말로 "${fileName}" 파일을 삭제하시겠습니까?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/labeling/audio/${fileId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || '삭제에 실패했습니다');
+      }
+
+      // Remove from the local queue list
+      window.labelingQueue = window.labelingQueue.filter(item => item.id !== fileId);
+      
+      // Refresh the UI
+      renderQueue(window.labelingQueue);
+      
+      // If the currently loaded file was deleted, load the next one
+      if (currentAudioId === fileId) {
+        const nextItem = window.labelingQueue[0]; // Load first available
+        if (nextItem) {
+          loadAudio(nextItem);
+        } else {
+          // No files left, reset the view
+          if (wavesurfer) {
+            wavesurfer.load(''); // Clear current audio
+          }
+          currentAudioId = null;
+        }
+      }
+      
+      console.log(`File ${fileId} deleted successfully`);
+      showNotification(`${fileName} 파일이 삭제되었습니다.`, 'success');
+
+    } catch (error) {
+      console.error('Failed to delete file:', error);
+      showNotification(`파일 삭제 실패: ${error.message}`, 'error');
+    }
+  }
+
   function renderQueue(queue) {
     dom.queueList.innerHTML = queue.map(item => `
       <li class="file-item" data-id="${item.id}" role="option">
         <div class="file-rows">
           <div class="file-name">${item.file_name}</div>
-          <span class="status-badge ${item.is_processed ? 'processed' : 'not-processed'}">
-            ${item.is_processed ? '완료' : '처리필요'}
-          </span>
+          <div>
+            <span class="status-badge ${item.is_processed ? 'processed' : 'not-processed'}">
+              ${item.is_processed ? '완료' : '처리필요'}
+            </span>
+            <button class="delete-btn" data-id="${item.id}" title="삭제">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
         </div>
       </li>`
     ).join('');
     
+    // Add click event to file items to load audio
     dom.queueList.querySelectorAll('.file-item').forEach(item => {
-        item.addEventListener('click', () => {
+        item.addEventListener('click', (e) => {
+            // If the click was on the delete button, don't load the file
+            if (e.target.closest('.delete-btn')) {
+                return;
+            }
+            
             const fileId = parseInt(item.dataset.id, 10);
             // Use the globally stored queue data
             const fileToLoad = window.labelingQueue.find(f => f.id === fileId);
             loadAudio(fileToLoad);
         });
     });
+    
+    // Add click event to delete buttons
+    dom.queueList.querySelectorAll('.delete-btn').forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent triggering the file load click event
+            const fileId = parseInt(button.dataset.id, 10);
+            const fileItem = button.closest('.file-item');
+            const fileName = fileItem.querySelector('.file-name').textContent;
+            deleteFile(fileId, fileName);
+        });
+    });
+    
+    // Update the queue metrics in the header
+    updateQueueMetrics(queue);
+  }
+
+  function updateQueueMetrics(queue) {
+    const totalFiles = queue.length;
+    const completedFiles = queue.filter(item => item.is_processed).length;
+    
+    document.getElementById('m-queue').textContent = totalFiles;
+    document.getElementById('m-done-today').textContent = completedFiles;
   }
 
   async function saveAndNext() {
@@ -344,6 +427,7 @@ document.addEventListener('DOMContentLoaded', () => {
   dom.playbackSpeedSelect.addEventListener('change', (e) => wavesurfer.setPlaybackRate(parseFloat(e.target.value)));
   dom.saveBtn.addEventListener('click', saveAndNext);
   dom.nextBtn.addEventListener('click', saveAndNext);
+  dom.refreshBtn?.addEventListener('click', fetchQueue);
 
   // ---------------- Helpers ----------------
   function formatTime(seconds) {
@@ -499,4 +583,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ---------------- Initial Load ----------------
   initWavesurfer();
   fetchQueue();
+  
+  // Periodically refresh the queue every 30 seconds to keep it updated
+  setInterval(fetchQueue, 30000);
 });

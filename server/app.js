@@ -10,17 +10,17 @@ const Sentry = require("@sentry/node");
 const { ProfilingIntegration } = require("@sentry/profiling-node");
 
 // 라우트 import
-const authRoutes = require('./routes/authRoutes');
+const authRoutes = require('./routes/auth');
 const aiRoutes = require('./routes/aiRoutes');
 const adminRoutes = require('./routes/adminRoutes');
-const adminUserRoutes = require('./routes/adminUserRoutes');
-const adminInviteRoutes = require('./routes/adminInviteRoutes');
+const adminUserRoutes = require('./routes/admin/users');
+const adminInviteRoutes = require('./routes/admin/invites');
 const kakaoRoutes = require('./routes/kakaoRoutes');
 const monitoringRoutes = require('./routes/monitoringRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const weatherRoutes = require('./routes/weatherApi');
 const sensorDataRoutes = require('./routes/sensorDataApi');
-const labelingRoutes = require('./routes/labelingRoutes');
+const labelingRoutes = require('./routes/labeling');
 
 const app = express();
 
@@ -197,7 +197,7 @@ app.use('/api/admin-users', adminUserRoutes); // 관리자 전용 사용자 관�
 app.use('/api/admin-invites', adminInviteRoutes); // 관리자 초대 시스템
 
 // ESP32 API 라우트
-const esp32DashboardApi = require('./routes/esp32DashboardApi');
+const esp32DashboardApi = require('./routes/esp32');
 app.use('/api/esp32', esp32DashboardApi);
 
 // 카카오 로그인 라우트 (별도 경로)
