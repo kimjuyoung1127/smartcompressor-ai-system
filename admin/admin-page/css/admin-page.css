@@ -1,0 +1,146 @@
+:root {
+    --admin-primary: #6B46C1;
+    --admin-secondary: #38B2AC;
+}
+
+.admin-sidebar {
+    width: 260px;
+    background-color: var(--sidebar-bg);
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+    border-right: 1px solid var(--border-color);
+    z-index: 1000;
+}
+
+.admin-main-content {
+    margin-left: calc(260px + 1.5rem);
+    width: calc(100% - (260px + 1.5rem));
+    padding: 1.5rem 2rem;
+}
+
+.admin-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 0.75rem;
+    padding: 1.8rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+}
+
+.user-management-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.user-management-table th,
+.user-management-table td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.role-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.role-admin { background-color: rgba(107, 70, 193, 0.15); color: #6B46C1; }
+.role-user { background-color: rgba(72, 187, 120, 0.15); color: var(--success); }
+.role-labeler { background-color: rgba(237, 137, 54, 0.15); color: var(--warning); }
+.role-owner { background-color: rgba(56, 178, 172, 0.15); color: var(--accent-secondary); }
+
+.status-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.status-active { background-color: rgba(72, 187, 120, 0.15); color: var(--success); }
+.status-inactive { background-color: rgba(160, 174, 192, 0.15); color: var(--text-secondary); }
+
+.admin-nav-link {
+    display: flex;
+    align-items: center;
+    padding: 0.85rem 1rem;
+    border-radius: 0.5rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    margin: 0.15rem 0;
+    text-decoration: none;
+}
+
+.admin-nav-link:hover {
+    background-color: rgba(138, 92, 254, 0.1);
+    color: #FFFFFF;
+    transform: translateX(5px);
+}
+
+.admin-nav-link.active {
+    background-color: rgba(138, 92, 254, 0.2);
+    color: #FFFFFF;
+    font-weight: 700;
+}
+
+.admin-nav-link i {
+    margin-right: 1rem;
+    width: 20px;
+    text-align: center;
+}
+
+.action-buttons .btn {
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.hamburger-menu {
+    display: none;
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 1001;
+    background: var(--admin-primary);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+@media (max-width: 768px) {
+    .admin-sidebar {
+        position: fixed;
+        top: 0;
+        left: -260px;
+        width: 260px;
+        height: 100vh;
+        z-index: 1000;
+        transition: left 0.3s ease;
+        box-shadow: 3px 0 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .admin-sidebar.active {
+        left: 0;
+    }
+    
+    .admin-main-content {
+        margin-left: 0;
+        padding: 1rem;
+        width: 100%;
+    }
+    
+    .hamburger-menu {
+        display: block;
+    }
+}

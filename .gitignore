@@ -61,3 +61,4 @@ secrets.txt
 node_modules/
 database/
 *.log
+docs/

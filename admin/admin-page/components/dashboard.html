@@ -1,0 +1,69 @@
+<header class="page-header">
+    <div class="header-left">
+        <h1>관리자 대시보드</h1>
+        <p>시스템 관리 및 사용자 관리</p>
+    </div>
+    <div class="header-right">
+        <div class="search-bar">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="관리 검색...">
+        </div>
+        <button class="icon-button"><i class="fas fa-comment-dots"></i></button>
+        <button class="icon-button"><i class="fas fa-bell"></i></button>
+    </div>
+</header>
+
+<div class="row">
+    <div class="col-md-3 mb-4">
+        <div class="admin-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <p class="text-secondary mb-1">총 사용자 수</p>
+                    <h3 id="totalUsers">0</h3>
+                </div>
+                <div class="bg-primary bg-opacity-10 rounded-circle p-3">
+                    <i class="fas fa-users text-primary" style="font-size: 1.5rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="admin-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <p class="text-secondary mb-1">활성 사용자</p>
+                    <h3 id="activeUsers">0</h3>
+                </div>
+                <div class="bg-success bg-opacity-10 rounded-circle p-3">
+                    <i class="fas fa-user-check text-success" style="font-size: 1.5rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="admin-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <p class="text-secondary mb-1">관리자 수</p>
+                    <h3 id="adminUsers">0</h3>
+                </div>
+                <div class="bg-warning bg-opacity-10 rounded-circle p-3">
+                    <i class="fas fa-user-shield text-warning" style="font-size: 1.5rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="admin-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <p class="text-secondary mb-1">오늘 가입</p>
+                    <h3 id="todayUsers">0</h3>
+                </div>
+                <div class="bg-info bg-opacity-10 rounded-circle p-3">
+                    <i class="fas fa-calendar-day text-info" style="font-size: 1.5rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

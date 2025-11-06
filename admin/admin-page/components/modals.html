@@ -1,0 +1,110 @@
+<!-- User Role Update Modal -->
+<div class="modal fade" id="userRoleModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark text-light">
+            <div class="modal-header">
+                <h5 class="modal-title">역할 변경</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="roleUpdateForm">
+                    <input type="hidden" id="userIdToUpdate">
+                    <div class="mb-3">
+                        <label class="form-label">사용자명</label>
+                        <input type="text" class="form-control bg-dark text-light" id="userToUpdate" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">이메일</label>
+                        <input type="email" class="form-control bg-dark text-light" id="emailToUpdate" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">현재 역할</label>
+                        <input type="text" class="form-control bg-dark text-light" id="currentRole" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">변경할 역할</label>
+                        <select class="form-select bg-dark text-light" id="newRole">
+                            <option value="user">사용자 (user)</option>
+                            <option value="labeler">라벨러 (labeler)</option>
+                            <option value="owner">점주 (owner)</option>
+                            <option value="admin">관리자 (admin)</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-primary" id="confirmRoleUpdate">변경</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- User Status Update Modal -->
+<div class="modal fade" id="userStatusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark text-light">
+            <div class="modal-header">
+                <h5 class="modal-title">계정 상태 변경</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>사용자 <strong id="statusUserName"></strong>의 계정 상태를 변경하시겠습니까?</p>
+                <input type="hidden" id="statusUserId">
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="statusRadio" id="activateRadio" value="true">
+                    <label class="form-check-label" for="activateRadio">활성화</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="statusRadio" id="deactivateRadio" value="false">
+                    <label class="form-check-label" for="deactivateRadio">비활성화</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-primary" id="confirmStatusUpdate">변경</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Invite Creation Modal -->
+<div class="modal fade" id="inviteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark text-light">
+            <div class="modal-header">
+                <h5 class="modal-title">관리자 초대 생성</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="inviteForm">
+                    <div class="mb-3">
+                        <label class="form-label">이메일</label>
+                        <input type="email" class="form-control bg-dark text-light" id="inviteEmail" placeholder="초대할 이메일 주소" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">사용자명</label>
+                        <input type="text" class="form-control bg-dark text-light" id="inviteUsername" placeholder="사용자명" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">이름</label>
+                        <input type="text" class="form-control bg-dark text-light" id="inviteFullName" placeholder="전체 이름">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">역할</label>
+                        <select class="form-select bg-dark text-light" id="inviteRole">
+                            <option value="admin">관리자 (admin)</option>
+                            <option value="user">사용자 (user)</option>
+                            <option value="labeler">라벨러 (labeler)</option>
+                            <option value="owner">점주 (owner)</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-primary" id="confirmInvite">초대 생성</button>
+            </div>
+        </div>
+    </div>
+</div>

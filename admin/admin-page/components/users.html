@@ -1,0 +1,35 @@
+<header class="page-header">
+    <div class="header-left">
+        <h1>사용자 관리</h1>
+        <p>사용자 목록 및 권한 관리</p>
+    </div>
+    <div class="header-right">
+        <button class="btn btn-primary" id="createUserBtn">
+            <i class="fas fa-user-plus me-2"></i>사용자 생성
+        </button>
+        <button class="btn btn-outline-primary ms-2" id="inviteUserBtn">
+            <i class="fas fa-paper-plane me-2"></i>초대 생성
+        </button>
+    </div>
+</header>
+
+<div class="admin-card">
+    <div class="table-responsive">
+        <table class="user-management-table">
+            <thead>
+                <tr>
+                    <th>사용자</th>
+                    <th>이메일</th>
+                    <th>역할</th>
+                    <th>상태</th>
+                    <th>가입일</th>
+                    <th>최근 로그인</th>
+                    <th>작업</th>
+                </tr>
+            </thead>
+            <tbody id="usersTableBody">
+                <!-- 사용자 목록이 여기에 표시됩니다 -->
+            </tbody>
+        </table>
+    </div>
+</div>
