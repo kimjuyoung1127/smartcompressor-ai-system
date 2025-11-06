@@ -3,7 +3,7 @@ const express = require('express');
 const path = require('path');
 const corsMiddleware = require('./middleware/cors');
 const cookieParser = require('cookie-parser');
-const DatabaseService = require('../services/database_service');
+const DatabaseService = require('../database/database_service');
 
 // Sentry 초기화
 const Sentry = require("@sentry/node");

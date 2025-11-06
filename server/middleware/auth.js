@@ -1,4 +1,4 @@
-const DatabaseService = require('../../services/database_service');
+const DatabaseService = require('../../database/database_service');
 const db = new DatabaseService();
 
 // 세션 검증 미들웨어

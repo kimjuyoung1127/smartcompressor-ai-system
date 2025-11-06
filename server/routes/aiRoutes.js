@@ -3,7 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const DatabaseService = require('../../services/database_service');
+const DatabaseService = require('../../database/database_service');
 
 // PostgreSQL 데이터베이스 서비스 초기화
 const db = new DatabaseService();

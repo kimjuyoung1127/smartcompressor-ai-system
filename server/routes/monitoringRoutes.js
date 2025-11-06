@@ -1,5 +1,5 @@
 const express = require('express');
-const DatabaseService = require('../../services/database_service');
+const DatabaseService = require('../../database/database_service');
 const router = express.Router();
 
 // PostgreSQL 데이터베이스 서비스 초기화

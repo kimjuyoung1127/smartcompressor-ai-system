@@ -2,7 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const router = express.Router();
-const DatabaseService = require('../../../services/database_service');
+const DatabaseService = require('../../../database/database_service');
 const { requireAdmin } = require('../../middleware/rbac');
 const { authenticateSession } = require('../../middleware/auth');
 
