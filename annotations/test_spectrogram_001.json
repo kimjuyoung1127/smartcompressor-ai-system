@@ -1,0 +1,17 @@
+{
+  "image_path": "data/spectrograms/test_spectrogram_001.png",
+  "image_name": "test_spectrogram_001.png",
+  "label": "과부하",
+  "regions": [
+    {
+      "x": 20,
+      "y": 30,
+      "width": 50,
+      "height": 50,
+      "label": "leak",
+      "label_name": "냉매 누설"
+    }
+  ],
+  "labeled_at": "2025-11-06T04:02:12.994370",
+  "labeled_by": "expert"
+}

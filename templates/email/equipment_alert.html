@@ -1,0 +1,54 @@
+
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>{{ subject }}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                        .header { background: #dc3545; color: white; padding: 20px; text-align: center; }
+                        .content { padding: 20px; background: #f8f9fa; }
+                        .alert-info { background: white; padding: 20px; border-radius: 5px; margin: 15px 0; }
+                        .status-normal { color: #28a745; }
+                        .status-warning { color: #ffc107; }
+                        .status-error { color: #dc3545; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <h1>장비 상태 알림</h1>
+                            <p>매장: {{ store_name }}</p>
+                        </div>
+                        <div class="content">
+                            <div class="alert-info">
+                                <h3>장비 정보</h3>
+                                <p><strong>장비명:</strong> {{ equipment_name }}</p>
+                                <p><strong>장비 ID:</strong> {{ equipment_id }}</p>
+                                <p><strong>현재 상태:</strong> <span class="status-{{ alert_level }}">{{ equipment_status }}</span></p>
+                                <p><strong>알림 시간:</strong> {{ alert_time }}</p>
+                                <p><strong>알림 레벨:</strong> {{ alert_level }}</p>
+                            </div>
+                            
+                            <div class="alert-info">
+                                <h3>상세 정보</h3>
+                                <p>{{ alert_message }}</p>
+                                {% if sensor_data %}
+                                <h4>센서 데이터</h4>
+                                <ul>
+                                    {% for sensor, value in sensor_data.items() %}
+                                    <li><strong>{{ sensor }}:</strong> {{ value }}</li>
+                                    {% endfor %}
+                                </ul>
+                                {% endif %}
+                            </div>
+                            
+                            <p style="text-align: center; margin: 30px 0;">
+                                <a href="{{ equipment_url }}" style="background: #dc3545; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px;">장비 상태 확인</a>
+                            </p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+                
