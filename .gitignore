@@ -71,3 +71,14 @@ secrets.txt
 node_modules/
 # database/ is now partially ignored (only .db files)
 *.log
+
+# Test coverage
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Audio data files (too large for git)
+data/labeling_ready/*.wav
+data/labeling_ready/*.mp3
+data/audio/*.wav
+data/audio/*.mp3
