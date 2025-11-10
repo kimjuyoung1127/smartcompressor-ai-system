@@ -9,156 +9,14 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
 
   <!-- App CSS -->
-  <link href="/static/css/labeling/labeling_tool.css" rel="stylesheet" />
+  <link href="labeling_tool.css" rel="stylesheet" />
   <link href="/static/css/dashboard_mobile_responsive.css" rel="stylesheet" />
 
   <!-- Annotorious (for overlay UI skin only; logic will be in JS file later) -->
   <link rel="stylesheet" href="https://unpkg.com/@recogito/annotorious@2.3.0/dist/annotorious.min.css" />
 
-  <style>
-    :root {
-      --card-bg: #111418;
-      --secondary-bg: #0d1014;
-      --border-color: #262b33;
-      --text-primary: #e8eaed;
-      --text-secondary: #9aa0a6;
-      --accent-primary: #8a5cfe;
-      --success: #48bb78;
-      --warning: #ed8936;
-      --danger: #ef4444;
-      --info: #38bdf8;
-      --muted: #2b3038;
-      --chip-bg: #1a1f26;
-    }
-
-    [data-theme="light"] {
-      --card-bg: #ffffff;
-      --secondary-bg: #f7f7fb;
-      --border-color: #e5e7eb;
-      --text-primary: #0f172a;
-      --text-secondary: #667085;
-      --chip-bg: #f1f5f9;
-    }
-
-    body { background: var(--secondary-bg); color: var(--text-primary); }
-
-    /* ---------- Layout ---------- */
-    .tool-container {
-      display: grid;
-      grid-template-columns: 280px 1fr 320px;
-      gap: 1.25rem;
-      padding: 1.25rem 0 2rem;
-      min-height: calc(100vh - 92px);
-    }
-
-    .panel {
-      background: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 16px;
-      overflow: auto;
-      box-shadow: 0 2px 10px rgba(0,0,0,.12);
-    }
-
-    .left-panel { display:flex; flex-direction:column; }
-    .center-panel { display:flex; flex-direction:column; gap:12px; }
-    .right-panel { display:flex; flex-direction:column; }
-
-    .page-header { display:flex; align-items:center; justify-content:space-between; gap:16px; }
-    .header-left h1 { margin: 0 0 6px; font-size: 20px; }
-    .metric-badges { display:flex; gap:8px; flex-wrap:wrap; }
-    .metric { background: var(--chip-bg); border:1px solid var(--border-color); border-radius:999px; padding:6px 10px; font-size:12px; color:var(--text-secondary); display:flex; align-items:center; gap:6px; }
-
-    /* ---------- Center: work area ---------- */
-    .toolbar {
-      display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:space-between;
-      padding:8px; border:1px solid var(--border-color); border-radius:10px; background: var(--secondary-bg);
-    }
-    .tool-group { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-    .chip { background: var(--chip-bg); border:1px solid var(--border-color); color:var(--text-secondary); padding:6px 10px; border-radius:999px; font-size:12px; display:inline-flex; align-items:center; gap:6px; cursor:pointer; }
-    .chip[data-active="true"] { color:#fff; background: var(--accent-primary); border-color: transparent; }
-
-    .spectrogram-wrap { position:relative; background:#000; border-radius:10px; overflow:hidden; border:1px solid var(--border-color); height:360px; }
-    .spectrogram { position:absolute; inset:0; }
-    .cursor-overlay { pointer-events:none; position:absolute; inset:0; }
-    .vertical-cursor { position:absolute; top:0; width:2px; height:100%; background: rgba(255,64,64,.9); }
-
-    .waveform { height:140px; border:1px solid var(--border-color); border-radius:10px; overflow:hidden; background: #0b0e13; }
-    .timeline { height:48px; border:1px dashed var(--border-color); border-radius:10px; display:flex; align-items:center; padding-left:8px; }
-
-    .audio-controls { display:flex; align-items:center; justify-content:center; gap:10px; padding:10px; background: var(--secondary-bg); border:1px solid var(--border-color); border-radius:10px; }
-    .control-btn { width:40px; height:40px; border-radius:10px; border:1px solid var(--border-color); background:var(--chip-bg); display:grid; place-items:center; cursor:pointer; }
-    .control-btn.primary { background: var(--accent-primary); color:#fff; border-color: transparent; }
-
-    select, input[type="number"], input[type="text"] {
-      background: var(--chip-bg); border:1px solid var(--border-color); color:var(--text-primary); border-radius:8px; padding:6px 8px; height:36px;
-    }
-
-    .timefreq-indicator { display:flex; gap:12px; align-items:center; font-size:12px; color:var(--text-secondary); }
-
-    /* ---------- Left: queue ---------- */
-    .queue-toolbar { display:flex; gap:8px; margin-bottom:10px; flex-wrap: wrap; align-items: center; }
-    .queue-toolbar input[type="text"], .queue-toolbar select {
-        flex: 1;
-        min-width: 120px;
-    }
-    .queue-toolbar .chip {
-        flex-shrink: 0;
-    }
-    .file-list { list-style:none; margin:0; padding:0; }
-    .file-item { padding:10px; border:1px solid var(--border-color); border-radius:10px; margin-bottom:8px; cursor:pointer; transition:transform .06s ease, background .2s; display:grid; gap:6px; }
-    .file-item:hover { transform: translateY(-1px); }
-    .file-item.active { outline:2px solid var(--accent-primary); background: rgba(138,92,254,.08); }
-    .file-rows { display:flex; align-items:center; justify-content:space-between; }
-    .status-badge { padding:3px 8px; border-radius:999px; font-size:11px; border:1px solid var(--border-color); }
-    .status-badge.processed { background: rgba(72,187,120,.12); color: var(--success); }
-    .status-badge.not-processed { background: rgba(237,137,54,.12); color: var(--warning); }
-    .delete-btn {
-      background: var(--danger);
-      color: white;
-      border: none;
-      border-radius: 50%;
-      width: 24px;
-      height: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      margin-left: 8px;
-      font-size: 12px;
-    }
-    .delete-btn:hover {
-      opacity: 0.8;
-    }
-
-    /* ---------- Right: tools ---------- */
-    .label-section h4 { margin:8px 0; }
-    .label-grid { display:grid; grid-template-columns:1fr; gap:8px; }
-    .label-btn { display:flex; align-items:center; gap:8px; justify-content:space-between; padding:10px 12px; border-radius:10px; cursor:pointer; border:1px solid var(--border-color); background:var(--chip-bg); }
-    .label-btn[data-active="true"] { background: var(--accent-primary); color:#fff; border-color: transparent; }
-    .label-pill { display:flex; align-items:center; gap:8px; }
-    .shortcut { opacity:.7; font-size:12px; }
-
-    .slider-row { display:grid; grid-template-columns:auto 1fr 56px; align-items:center; gap:10px; }
-    .action-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
-    .action-btn { padding:10px 12px; border-radius:10px; border:1px solid var(--border-color); background:var(--chip-bg); cursor:pointer; }
-    .action-btn.save { background: var(--success); color:#fff; border-color: transparent; }
-    .action-btn.next { background: var(--info); color:#001018; border-color: transparent; }
-
-    .autosave-dot { width:8px; height:8px; border-radius:999px; background:#9aa0a6; display:inline-block; }
-    .autosave-dot[data-state="saved"] { background: var(--success); }
-    .autosave-dot[data-state="dirty"] { background: var(--warning); }
-
-    /* ---------- Responsive ---------- */
-    @media (max-width: 1199px) {
-      .tool-container { grid-template-columns: 240px 1fr 300px; }
-    }
-    @media (max-width: 991px) {
-      .tool-container { grid-template-columns: 1fr; }
-      .left-panel, .right-panel { order: 2; }
-      .center-panel { order: 1; }
-    }
-  </style>
+  <!-- App Specific CSS -->
+  <link href="audio_spectrogram_labeling.css" rel="stylesheet" />
 </head>
 <body>
   <main id="main-content">
@@ -306,59 +164,11 @@
   <script src="https://unpkg.com/wavesurfer.js@6.6.4/dist/plugin/wavesurfer.timeline.min.js" defer></script>
   <script src="https://unpkg.com/@recogito/annotorious@2.3.0/dist/annotorious.min.js"></script>
 
-  <!-- UI-only micro interactions (safe even before full JS wiring) -->
-  <script>
-    const root = document.documentElement;
-    const themeBtn = document.getElementById('theme-toggle');
-    themeBtn?.addEventListener('click', () => {
-      const isLight = document.documentElement.getAttribute('data-theme') === 'light';
-      document.documentElement.setAttribute('data-theme', isLight ? 'dark' : 'light');
-      themeBtn.setAttribute('aria-pressed', String(!isLight));
-    });
-
-    // Confidence slider sync
-    const cSlider = document.getElementById('confidence');
-    const cNum = document.getElementById('confidence-num');
-    cSlider?.addEventListener('input', () => { cNum.value = cSlider.value; markDirty(); });
-    cNum?.addEventListener('input', () => { cSlider.value = cNum.value; markDirty(); });
-
-    // Label button active state
-    const labelGrid = document.getElementById('label-grid');
-    let currentLabel = 'normal';
-    labelGrid?.addEventListener('click', (e) => {
-      const btn = e.target.closest('.label-btn');
-      if(!btn) return;
-      labelGrid.querySelectorAll('.label-btn').forEach(b => { b.dataset.active = 'false'; b.setAttribute('aria-pressed','false'); });
-      btn.dataset.active = 'true'; btn.setAttribute('aria-pressed','true');
-      currentLabel = btn.dataset.label;
-      markDirty();
-    });
-
-    // Autosave indicator (UI only)
-    const dot = document.getElementById('autosave-dot');
-    let autosaveTimer;
-    function markDirty(){
-      dot.dataset.state = 'dirty';
-      clearTimeout(autosaveTimer);
-      autosaveTimer = setTimeout(()=>{ dot.dataset.state = 'saved'; }, 1200);
-    }
-
-
-
-    // Keyboard shortcuts (UI-layer only; audio wiring will be in external JS)
-    document.addEventListener('keydown', (e)=>{
-      if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) return;
-      if(e.code==='Digit1' || e.code==='Digit2' || e.code==='Digit3' || e.code==='Digit4'){
-        const map = {Digit1:'normal', Digit2:'warning', Digit3:'critical', Digit4:'unknown'};
-        const label = map[e.code];
-        const target = [...document.querySelectorAll('.label-btn')].find(b=>b.dataset.label===label);
-        if(target){ target.click(); }
-      }
-    });
-  </script>
+  <!-- UI-only micro interactions -->
+  <script src="audio_spectrogram_labeling_ui.js" defer></script>
 
   <!-- App logic (to be implemented next; keeps UI clean) -->
   <script src="/static/js/auth-manager.js" defer></script>
-  <script src="/static/js/labeling/audio_spectrogram_labeling.js" defer></script>
+  <script src="audio_spectrogram_labeling.js" defer></script>
 </body>
 </html>
