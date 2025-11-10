@@ -173,12 +173,12 @@ app.get('/storage/dashboard', (req, res) => {
 
 // Admin Dashboard Route
 app.get('/admin-panel', [verifySession, ensureAdmin], (req, res) => {
-    res.sendFile(path.join(__dirname, '../admin/admin-dashboard.html'));
+    res.sendFile(path.join(__dirname, '../static/admin/admin-dashboard.html'));
 });
 
 // Admin Registration Route
 app.get('/register-admin', (req, res) => {
-    res.sendFile(path.join(__dirname, '../admin/register-admin.html'));
+    res.sendFile(path.join(__dirname, '../static/admin/register-admin.html'));
 });
 
 
