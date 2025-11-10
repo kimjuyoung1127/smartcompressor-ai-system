@@ -22,6 +22,16 @@ const weatherRoutes = require('./routes/weatherApi');
 const sensorDataRoutes = require('./routes/sensorDataApi');
 const labelingRoutes = require('./routes/labeling');
 
+// Customer Dashboard 라우트 import
+const customerPageRoutes = require('./routes/customer');
+const customerDashboardAPI = require('./routes/customer/dashboard');
+const customerDeviceAPI = require('./routes/customer/devices');
+const customerMonitoringAPI = require('./routes/customer/monitoring');
+const customerAnomalyAPI = require('./routes/customer/anomalies');
+const customerAudioAPI = require('./routes/customer/audio');
+const customerReportAPI = require('./routes/customer/reports');
+const customerSampleDataAPI = require('./routes/customer/sampleData');
+
 const app = express();
 
 Sentry.init({
@@ -90,6 +100,7 @@ app.get('/static/js/enhanced-registration.js', [verifySession, ensureAdmin], (re
 app.use('/static', express.static(path.join(__dirname, '../static')));
 app.use(express.static(path.join(__dirname, '../static')));
 app.use('/static/dashboard-components', express.static(path.join(__dirname, '../static/dashboard-components')));
+app.use('/customer', express.static(path.join(__dirname, '../static/customer'))); // Customer Dashboard 정적 파일
 
 // 메인 페이지 (쇼윈도 - 로그인 화면)
 app.get('/', (req, res) => {
@@ -155,10 +166,10 @@ app.get('/storage/dashboard', (req, res) => {
 
 
 
-// Customer Dashboard Route
-app.get('/dashboard', (req, res) => {
-    res.sendFile(path.join(__dirname, '../templates/customer/dashboard.html'));
-});
+// Customer Dashboard Route (기존 - 주석 처리)
+// app.get('/dashboard', (req, res) => {
+//     res.sendFile(path.join(__dirname, '../templates/customer/dashboard.html'));
+// });
 
 // Admin Dashboard Route
 app.get('/admin-panel', [verifySession, ensureAdmin], (req, res) => {
@@ -195,6 +206,16 @@ app.use('/api/sensor', sensorDataRoutes);
 app.use('/api/labeling', labelingRoutes); // 라벨링 시스템 (RBAC 적용)
 app.use('/api/admin-users', adminUserRoutes); // 관리자 전용 사용자 관리 API
 app.use('/api/admin-invites', adminInviteRoutes); // 관리자 초대 시스템
+
+// Customer Dashboard 라우트 (RBAC 적용: admin, premium_user)
+app.use('/customer', customerPageRoutes);                        // 페이지 라우트
+app.use('/api/customer/dashboard', customerDashboardAPI);        // 대시보드 API
+app.use('/api/customer/devices', customerDeviceAPI);             // 디바이스 API
+app.use('/api/customer/monitoring', customerMonitoringAPI);      // 모니터링 API
+app.use('/api/customer/anomalies', customerAnomalyAPI);          // 이상 징후 API
+app.use('/api/customer/audio', customerAudioAPI);                // 오디오 API
+app.use('/api/customer/reports', customerReportAPI);             // 리포트 API
+app.use('/api/customer/sample-data', customerSampleDataAPI);     // 샘플 데이터 API
 
 // ESP32 API 라우트
 const esp32DashboardApi = require('./routes/esp32');

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Dashboard - SignalCraft</title>
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Custom CSS -->
+    <link href="/customer/css/main.css" rel="stylesheet">
+    <link href="/customer/css/components.css" rel="stylesheet">
+    <link href="/customer/css/responsive.css" rel="stylesheet">
+    
+    <style>
+        /* 로딩 화면 */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            color: white;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            margin-top: 1rem;
+            font-size: 1.2rem;
+        }
+        
+        .loading-screen.hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- 로딩 화면 -->
+    <div class="loading-screen" id="loading-screen">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">로딩 중...</div>
+    </div>
+
+    <!-- 메인 컨텐츠 -->
+    <div id="app" style="display: none;">
+        <!-- 사이드바 -->
+        <aside id="sidebar"></aside>
+
+        <!-- 메인 컨텐츠 영역 -->
+        <main id="main-content">
+            <!-- 헤더 -->
+            <header id="header"></header>
+
+            <!-- 대시보드 컨텐츠 -->
+            <div id="dashboard-content">
+                <div class="welcome-message">
+                    <h1>환영합니다! 🎉</h1>
+                    <p>SignalCraft Customer Dashboard에 오신 것을 환영합니다.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- JavaScript 모듈 -->
+    <script src="/customer/js/config.js"></script>
+    <script src="/customer/js/utils.js"></script>
+    <script src="/customer/js/api.js"></script>
+    <script src="/customer/js/auth.js"></script>
+    <script src="/customer/js/router.js"></script>
+    <script src="/customer/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>프리미엄 플랜 업그레이드 필요 - SignalCraft</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .upgrade-container {
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .upgrade-card {
+            background: white;
+            border-radius: 20px;
+            padding: 3rem;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .upgrade-icon {
+            font-size: 5rem;
+            color: #ffd700;
+            margin-bottom: 1rem;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .upgrade-card h1 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .upgrade-message {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .features-list {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            text-align: left;
+        }
+
+        .features-list h3 {
+            text-align: center;
+            margin-bottom: 1rem;
+            color: #333;
+            font-size: 1.3rem;
+        }
+
+        .features-list ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .features-list li {
+            padding: 0.75rem 0;
+            color: #555;
+            display: flex;
+            align-items: center;
+            font-size: 1rem;
+        }
+
+        .features-list li i {
+            color: #28a745;
+            margin-right: 1rem;
+            font-size: 1.2rem;
+            min-width: 20px;
+        }
+
+        .upgrade-actions {
+            display: flex;
+            gap: 1rem;
+            flex-direction: column;
+            margin-bottom: 2rem;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #333;
+            border: 2px solid #ddd;
+        }
+
+        .btn-secondary:hover {
+            background: #e9ecef;
+            border-color: #ccc;
+        }
+
+        .support-info {
+            color: #999;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+        }
+
+        .support-info a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.3s;
+        }
+
+        .support-info a:hover {
+            color: #764ba2;
+        }
+
+        /* 반응형 */
+        @media (max-width: 768px) {
+            .upgrade-card {
+                padding: 2rem 1.5rem;
+            }
+
+            .upgrade-card h1 {
+                font-size: 1.5rem;
+            }
+
+            .upgrade-icon {
+                font-size: 4rem;
+            }
+
+            .upgrade-message {
+                font-size: 1rem;
+            }
+
+            .features-list li {
+                font-size: 0.9rem;
+                padding: 0.5rem 0;
+            }
+        }
+
+        /* 로딩 애니메이션 */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="upgrade-container">
+        <div class="upgrade-card">
+            <div class="upgrade-icon">
+                <i class="fas fa-crown"></i>
+            </div>
+            
+            <h1>프리미엄 기능입니다</h1>
+            
+            <p class="upgrade-message">
+                고급 대시보드 및 모니터링 기능을 사용하려면<br>
+                프리미엄 플랜으로 업그레이드가 필요합니다.
+            </p>
+            
+            <div class="features-list">
+                <h3>프리미엄 플랜 혜택</h3>
+                <ul>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <span>실시간 센서 모니터링</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <span>AI 기반 이상 징후 감지</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <span>오디오 분석 및 진단</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <span>상세 리포트 생성</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <span>무제한 디바이스 등록</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <span>24/7 우선 고객 지원</span>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="upgrade-actions">
+                <a href="/pricing" class="btn btn-primary">
+                    <i class="fas fa-arrow-up"></i>
+                    프리미엄으로 업그레이드
+                </a>
+                <a href="/" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i>
+                    홈으로 돌아가기
+                </a>
+            </div>
+            
+            <div class="support-info">
+                <p>궁금한 점이 있으시면</p>
+                <a href="/support">고객지원팀에 문의하세요</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 페이지 로드 시 사용자 정보 확인
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // 세션 확인
+                const response = await fetch('/api/auth/verify', {
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                
+                // 만약 로그인이 안 되어 있으면 로그인 페이지로
+                if (!data.success || !data.user) {
+                    window.location.href = '/';
+                }
+                
+                // admin이나 premium_user면 대시보드로 보냄
+                const userRole = data.user.role;
+                if (userRole === 'admin' || userRole === 'premium_user') {
+                    window.location.href = '/customer/dashboard';
+                }
+            } catch (error) {
+                console.error('권한 확인 오류:', error);
+            }
+        });
+    </script>
+</body>
+</html>
