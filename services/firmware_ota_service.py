@@ -12,7 +12,7 @@ import hashlib
 import threading
 from typing import Dict, List, Optional, Callable
 from datetime import datetime, timedelta
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from pathlib import Path
 import requests
 import zipfile

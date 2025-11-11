@@ -150,7 +150,36 @@ class RealtimeMonitoringService:
             result = ensemble_ai_service.predict_ensemble(temp_file)
 
             if result:
-                # 결과를 데이터베이스에 저장
+                # 하이브리드 저장 (이상만 오디오 파일 저장, 정상은 통계만)
+                try:
+                    from services.hybrid_storage_service import hybrid_storage_service
+                    from services.ai_service import UnifiedAIService
+                    
+                    # 특징 추출
+                    ai_service = UnifiedAIService()
+                    features = ai_service._extract_comprehensive_features(audio_data, sr)
+                    features_dict = {
+                        'mfcc': features[:13].tolist() if len(features) >= 13 else [],
+                        'spectral_centroid': features[13] if len(features) > 13 else 0,
+                        'spectral_rolloff': features[14] if len(features) > 14 else 0,
+                        # ... 필요한 특징들
+                    }
+                    
+                    # 하이브리드 저장
+                    storage_result = hybrid_storage_service.store_sample(
+                        device_id="ESP32_001",  # 실제로는 센서 ID 사용
+                        audio_data=audio_data,
+                        sample_rate=sr,
+                        analysis_result=result,
+                        features=features_dict
+                    )
+                    
+                    if storage_result and storage_result.get('stored'):
+                        logger.info(f"하이브리드 저장 완료: {storage_result.get('reason')}")
+                except Exception as e:
+                    logger.warning(f"하이브리드 저장 실패 (기존 방식 사용): {e}")
+                
+                # 결과를 데이터베이스에 저장 (기존 방식 - 호환성 유지)
                 self._save_monitoring_result(temp_file, result)
 
                 # 이상 감지 시 알림 처리

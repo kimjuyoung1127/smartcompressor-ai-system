@@ -216,10 +216,14 @@ def test_false_positive_scenarios():
     # 결과 요약
     print(f"\n📊 오탐 시나리오 테스트 결과:")
     print(f"   - 총 테스트: {len(results)}개")
-    print(f"   - 정확한 분류: {len([r for r in results if r['correct']])}개")
-    print(f"   - 오탐 (False Positive): {false_positives}개")
-    print(f"   - 미탐 (False Negative): {len([r for r in results if not r['correct'] and r['expected'] == 'door_open'])}개")
-    print(f"   - 정확도: {len([r for r in results if r['correct']]) / len(results) * 100:.1f}%")
+    if len(results) > 0:
+        print(f"   - 정확한 분류: {len([r for r in results if r['correct']])}개")
+        print(f"   - 오탐 (False Positive): {false_positives}개")
+        print(f"   - 미탐 (False Negative): {len([r for r in results if not r['correct'] and r['expected'] == 'door_open'])}개")
+        print(f"   - 정확도: {len([r for r in results if r['correct']]) / len(results) * 100:.1f}%")
+    else:
+        print(f"   ⚠️  테스트 결과가 없습니다. 모든 테스트 케이스가 실패했습니다.")
+        print(f"   - 정확도: N/A (결과 없음)")
     
     if false_positives > 0:
         print(f"\n⚠️  오탐이 {false_positives}개 발생했습니다!")
