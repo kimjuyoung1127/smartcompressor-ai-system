@@ -1,0 +1,20 @@
+프로덕션 서버에서 실행할 명령어:
+
+# 1. 최신 코드 가져오기
+git pull origin main
+
+# 2. 파일 존재 확인
+ls -la templates/customer/dashboard.html
+
+# 3. 서버 재시작
+pm2 restart signalcraft-app
+
+# 4. 로그 실시간 확인
+pm2 logs signalcraft-app
+
+# 5. 다른 터미널에서 테스트
+curl -v http://localhost:3000/dashboard
+
+# 6. dashboard.html 내용 확인
+head -20 templates/customer/dashboard.html
+

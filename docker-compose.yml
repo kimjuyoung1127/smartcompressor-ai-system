@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  # Python Flask 애플리케이션
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: smartcompressor-ai-app
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - FLASK_APP=app.py
+      - PYTHONUNBUFFERED=1
+    volumes:
+      # 코드 마운트 (개발 시)
+      - .:/app
+      # 데이터 영구 저장
+      - ./data:/app/data
+      - ./uploads:/app/uploads
+    env_file:
+      - .env
+    restart: unless-stopped
+    networks:
+      - smartcompressor-network
+    depends_on:
+      - db
+
+  # SQLite 데이터베이스 (볼륨 마운트)
+  # PostgreSQL을 사용하려면 아래 주석 해제
+  # db:
+  #   image: postgres:15-alpine
+  #   container_name: smartcompressor-ai-db
+  #   environment:
+  #     - POSTGRES_DB=smartcompressor
+  #     - POSTGRES_USER=postgres
+  #     - POSTGRES_PASSWORD=postgres
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
+  #   networks:
+  #     - smartcompressor-network
+  #   restart: unless-stopped
+
+  # Redis (선택사항 - 캐싱 및 세션 관리)
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: smartcompressor-ai-redis
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis_data:/data
+  #   networks:
+  #     - smartcompressor-network
+  #   restart: unless-stopped
+
+networks:
+  smartcompressor-network:
+    driver: bridge
+
+volumes:
+  # postgres_data:
+  # redis_data:
+

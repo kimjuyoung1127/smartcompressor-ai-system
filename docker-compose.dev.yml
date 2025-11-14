@@ -1,0 +1,37 @@
+version: '3.8'
+
+# 개발 환경용 Docker Compose 설정
+# 코드 변경 시 자동 반영 (볼륨 마운트)
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: smartcompressor-ai-app-dev
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+      - PYTHONUNBUFFERED=1
+    volumes:
+      # 코드 마운트 (실시간 반영)
+      - .:/app
+      # 데이터 영구 저장
+      - ./data:/app/data
+      - ./uploads:/app/uploads
+      # Python 캐시 제외
+      - /app/__pycache__
+      - /app/.pytest_cache
+    env_file:
+      - .env
+    restart: unless-stopped
+    networks:
+      - smartcompressor-network
+    command: python app.py
+
+networks:
+  smartcompressor-network:
+    driver: bridge
+

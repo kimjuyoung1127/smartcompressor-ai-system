@@ -1,0 +1,16 @@
+{
+  "device_id": "ICE_STORE_24H_002",
+  "timestamp": 1734921600000,
+  "sensor_number": "002",
+  "store_type": "ice_cream_24h",
+  "location": "bupyeong_branch",
+  "rms_energy": 1234.567,
+  "spectral_centroid": 3500.123,
+  "zero_crossing_rate": 0.15,
+  "decibel_level": 47.8,
+  "compressor_state": 1.0,
+  "anomaly_score": 0.25,
+  "efficiency_score": 0.85,
+  "sound_type": 1.0,
+  "intensity_level": 0.75
+}

@@ -1,0 +1,17 @@
+프로덕션 서버에서 실행:
+
+curl -v http://localhost:3000/dashboard
+
+결과를 확인:
+- HTML이 출력되면 → ✅ 정상
+- 404가 출력되면 → ❌ 문제
+
+추가 확인:
+
+# 파일 경로 확인
+pwd
+ls -la templates/customer/dashboard.html
+
+# 프로세스 디렉토리 확인
+pm2 info signalcraft-app | grep "exec cwd"
+

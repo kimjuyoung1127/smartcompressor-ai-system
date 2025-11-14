@@ -1,0 +1,19 @@
+프로덕션 서버에서 다음을 실행하세요:
+
+1. 최신 코드 가져오기:
+   cd /var/www/smartcompressor
+   git pull origin main
+
+2. 재시작:
+   pm2 restart signalcraft-app
+
+3. 접속:
+   https://signalcraft.kr/esp32-all-data
+
+기능:
+- 디바이스 ID 필터링
+- 표시 항목 수 제한 (50, 100, 500, 1000, 전체)
+- 타임스탬프별 정렬 (최신순)
+- CSV 내보내기
+- 통계 정보 (총 데이터, 표시 중, 로딩 시간)
+

@@ -1,32 +1,67 @@
-# Docker에서 제외할 파일들
-node_modules
-npm-debug.log
+# Git
 .git
 .gitignore
-README.md
-.env
-.nyc_output
-coverage
-.nyc_output
-.coverage
-.coverage/
+.github
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# 데이터베이스
+*.db
+*.sqlite
+*.sqlite3
+
+# 로그
 *.log
-data/backups
-data/exports
-data/downloaded_sounds
-data/synthetic_data
-data/training_data
-data/real_audio_uploads
-data/sound_samples
-data/real_sounds
-data/processed_audio
-data/augmented_audio
-data/synthetic_sounds
-data/engineer_labeling
-data/high_quality_sounds
-data/labeling_ready
-data/engineer_knowledge
-data/features
-data/models
-data/backups
-data/exports
+logs/
+
+# 환경 변수
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 테스트
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# 빌드
+dist/
+build/
+*.egg-info/
+
+# 문서 (선택사항 - 필요시 포함)
+# docs/
+
+# 임시 파일
+tmp/
+temp/
+*.tmp
+
+# 업로드 파일 (선택사항)
+# uploads/

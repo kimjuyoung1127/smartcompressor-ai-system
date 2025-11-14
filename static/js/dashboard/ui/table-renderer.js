@@ -109,3 +109,5 @@ class TableRenderer {
         return formatDateFmt(dateString);
     }
 }
+
+export { TableRenderer };

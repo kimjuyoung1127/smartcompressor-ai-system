@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>실시간 모니터링 대시보드</title>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .metric-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .metric-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .metric-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .failure-type-badge {
+            display: inline-block;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            margin: 5px;
+        }
+        
+        .failure-type-bearing_wear {
+            background: #FF6B6B;
+            color: white;
+        }
+        
+        .failure-type-refrigerant_leak {
+            background: #4ECDC4;
+            color: white;
+        }
+        
+        .failure-type-evaporator_frost {
+            background: #FFE66D;
+            color: #333;
+        }
+        
+        .failure-type-burst_sound {
+            background: #FF4757;
+            color: white;
+        }
+        
+        .failure-type-unbalance {
+            background: #A55EEA;
+            color: white;
+        }
+        
+        .failure-type-friction {
+            background: #26D0CE;
+            color: white;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-online {
+            background: #2ecc71;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-offline {
+            background: #e74c3c;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .realtime-log {
+            max-height: 300px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+        }
+        
+        .log-entry {
+            padding: 8px;
+            border-bottom: 1px solid #dee2e6;
+            font-size: 0.9em;
+        }
+        
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- 헤더 -->
+        <div class="header-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="mb-0">
+                        <i class="fas fa-chart-line"></i> 실시간 모니터링 대시보드
+                    </h1>
+                    <p class="text-muted mb-0">24시간 범용 압축기 모니터링 시스템</p>
+                </div>
+                <div>
+                    <span class="status-indicator status-online" id="connectionStatus"></span>
+                    <span id="connectionText">연결됨</span>
+                </div>
+            </div>
+            
+            <!-- 디바이스 선택 -->
+            <div class="mt-3">
+                <label for="deviceSelect" class="form-label"><strong>디바이스 선택:</strong></label>
+                <select id="deviceSelect" class="form-select" style="width: 200px; display: inline-block;">
+                    <option value="">전체</option>
+                    <option value="ESP32_001">ESP32_001</option>
+                    <option value="ESP32_002">ESP32_002</option>
+                    <option value="ESP32_003">ESP32_003</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- 실시간 메트릭 -->
+        <div class="row">
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <div class="metric-value" id="currentAnomalyScore">0.0</div>
+                    <div class="metric-label">이상 점수</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <div class="metric-value" id="currentDecibel">0</div>
+                    <div class="metric-label">데시벨 (dB)</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <div class="metric-value" id="currentStatus">정상</div>
+                    <div class="metric-label">상태</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <div class="metric-value" id="currentFailureType">-</div>
+                    <div class="metric-label">고장 유형</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 성능 지표 -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="chart-container">
+                    <h4><i class="fas fa-tachometer-alt"></i> 성능 지표</h4>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="metric-card">
+                                <div class="metric-value" id="processingTime">0</div>
+                                <div class="metric-label">평균 처리 시간 (ms)</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="metric-card">
+                                <div class="metric-value" id="throughput">0</div>
+                                <div class="metric-label">처리량 (개/초)</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="metric-card">
+                                <div class="metric-value" id="qualityPassRate">0%</div>
+                                <div class="metric-label">품질 통과율</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="metric-card">
+                                <div class="metric-value" id="labelingRate">0%</div>
+                                <div class="metric-label">라벨링 완료율</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="chart-container">
+                                <h5><i class="fas fa-chart-bar"></i> 처리 시간 추이</h5>
+                                <canvas id="processingTimeChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="chart-container">
+                                <h5><i class="fas fa-chart-line"></i> 처리량 추이</h5>
+                                <canvas id="throughputChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 차트 영역 -->
+        <div class="row">
+            <div class="col-md-8">
+                <div class="chart-container">
+                    <h4><i class="fas fa-chart-area"></i> 이상 점수 트렌드</h4>
+                    <canvas id="anomalyTrendChart"></canvas>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="chart-container">
+                    <h4><i class="fas fa-chart-pie"></i> 고장 유형별 통계</h4>
+                    <canvas id="failureTypeChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 고장 유형별 시각화 -->
+        <div class="chart-container">
+            <h4><i class="fas fa-exclamation-triangle"></i> 고장 유형별 발생 현황</h4>
+            <div id="failureTypeBadges"></div>
+        </div>
+        
+        <!-- 실시간 로그 -->
+        <div class="chart-container">
+            <h4><i class="fas fa-list"></i> 실시간 로그</h4>
+            <div class="realtime-log" id="realtimeLog"></div>
+        </div>
+    </div>
+    
+    <script>
+        // 전역 변수
+        let anomalyTrendChart = null;
+        let failureTypeChart = null;
+        let processingTimeChart = null;
+        let throughputChart = null;
+        let currentDeviceId = '';
+        let updateInterval = null;
+        let performanceHistory = [];
+        
+        // 차트 초기화
+        function initCharts() {
+            // 이상 점수 트렌드 차트
+            const anomalyCtx = document.getElementById('anomalyTrendChart').getContext('2d');
+            anomalyTrendChart = new Chart(anomalyCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: '이상 점수',
+                        data: [],
+                        borderColor: 'rgb(102, 126, 234)',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 1.0
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true
+                        }
+                    }
+                }
+            });
+            
+            // 고장 유형별 통계 차트
+            const failureCtx = document.getElementById('failureTypeChart').getContext('2d');
+            failureTypeChart = new Chart(failureCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: [
+                            '#FF6B6B',  // bearing_wear
+                            '#4ECDC4',  // refrigerant_leak
+                            '#FFE66D',  // evaporator_frost
+                            '#FF4757',  // burst_sound
+                            '#A55EEA',  // unbalance
+                            '#26D0CE'   // friction
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+            
+            // 처리 시간 차트
+            const processingTimeCtx = document.getElementById('processingTimeChart').getContext('2d');
+            processingTimeChart = new Chart(processingTimeCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: '처리 시간 (ms)',
+                        data: [],
+                        borderColor: 'rgb(255, 99, 132)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            // 처리량 차트
+            const throughputCtx = document.getElementById('throughputChart').getContext('2d');
+            throughputChart = new Chart(throughputCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: '처리량 (개/초)',
+                        data: [],
+                        borderColor: 'rgb(54, 162, 235)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 실시간 데이터 업데이트
+        async function updateRealtimeData() {
+            try {
+                const deviceId = document.getElementById('deviceSelect').value || null;
+                const params = deviceId ? `?device_id=${deviceId}` : '';
+                
+                // 실시간 데이터 조회
+                const response = await fetch(`/api/realtime/data${params}`);
+                const data = await response.json();
+                
+                // 메트릭 업데이트
+                document.getElementById('currentAnomalyScore').textContent = 
+                    (data.anomaly_score || 0).toFixed(2);
+                document.getElementById('currentDecibel').textContent = 
+                    Math.round(data.decibel_level || 0);
+                document.getElementById('currentStatus').textContent = 
+                    data.is_anomaly ? '⚠️ 이상' : '✅ 정상';
+                document.getElementById('currentFailureType').textContent = 
+                    getFailureTypeName(data.anomaly_type || 'normal');
+                
+                // 이상 점수에 따른 색상 변경
+                const scoreElement = document.getElementById('currentAnomalyScore');
+                const score = data.anomaly_score || 0;
+                if (score > 0.7) {
+                    scoreElement.style.color = '#FF4757';
+                } else if (score > 0.5) {
+                    scoreElement.style.color = '#FFE66D';
+                } else {
+                    scoreElement.style.color = '#2ecc71';
+                }
+                
+                // 트렌드 차트 업데이트
+                updateTrendChart(deviceId);
+                
+                // 고장 유형 통계 업데이트
+                updateFailureTypeStats(deviceId);
+                
+                // 로그 추가
+                addLogEntry(data);
+                
+                // 성능 지표 업데이트
+                updatePerformanceMetrics(deviceId);
+                
+            } catch (error) {
+                console.error('실시간 데이터 업데이트 오류:', error);
+                document.getElementById('connectionStatus').className = 'status-indicator status-offline';
+                document.getElementById('connectionText').textContent = '연결 끊김';
+            }
+        }
+        
+        // 성능 지표 업데이트
+        async function updatePerformanceMetrics(deviceId) {
+            try {
+                const params = deviceId ? `?device_id=${deviceId}` : '';
+                const response = await fetch(`/api/realtime/performance-metrics${params}`);
+                const metrics = await response.json();
+                
+                if (metrics.error) {
+                    console.error('성능 지표 조회 오류:', metrics.error);
+                    return;
+                }
+                
+                // 메트릭 업데이트
+                const processing = metrics.processing || {};
+                const al = metrics.active_learning || {};
+                const collection = metrics.data_collection || {};
+                
+                document.getElementById('processingTime').textContent = 
+                    processing.avg_processing_time_ms?.toFixed(1) || '0';
+                document.getElementById('throughput').textContent = 
+                    processing.throughput_per_second?.toFixed(2) || '0';
+                document.getElementById('qualityPassRate').textContent = 
+                    (collection.quality_pass_rate * 100).toFixed(1) + '%' || '0%';
+                document.getElementById('labelingRate').textContent = 
+                    (collection.labeling_rate * 100).toFixed(1) + '%' || '0%';
+                
+                // 성능 히스토리 업데이트
+                const timestamp = new Date().toLocaleTimeString('ko-KR');
+                performanceHistory.push({
+                    timestamp: timestamp,
+                    processing_time: processing.avg_processing_time_ms || 0,
+                    throughput: processing.throughput_per_second || 0
+                });
+                
+                // 최대 50개만 유지
+                if (performanceHistory.length > 50) {
+                    performanceHistory.shift();
+                }
+                
+                // 차트 업데이트
+                const labels = performanceHistory.map(h => h.timestamp);
+                const processingTimes = performanceHistory.map(h => h.processing_time);
+                const throughputs = performanceHistory.map(h => h.throughput);
+                
+                processingTimeChart.data.labels = labels;
+                processingTimeChart.data.datasets[0].data = processingTimes;
+                processingTimeChart.update('none');
+                
+                throughputChart.data.labels = labels;
+                throughputChart.data.datasets[0].data = throughputs;
+                throughputChart.update('none');
+                
+            } catch (error) {
+                console.error('성능 지표 업데이트 오류:', error);
+            }
+        }
+        
+        // 트렌드 차트 업데이트
+        async function updateTrendChart(deviceId) {
+            try {
+                const params = deviceId ? `?device_id=${deviceId}&hours=24` : '?hours=24';
+                const response = await fetch(`/api/realtime/trend${params}`);
+                const data = await response.json();
+                
+                const labels = data.trend.map(item => {
+                    const date = new Date(item.timestamp);
+                    return date.toLocaleTimeString('ko-KR');
+                });
+                const scores = data.trend.map(item => item.anomaly_score);
+                
+                anomalyTrendChart.data.labels = labels;
+                anomalyTrendChart.data.datasets[0].data = scores;
+                anomalyTrendChart.update('none'); // 애니메이션 없이 업데이트
+                
+            } catch (error) {
+                console.error('트렌드 차트 업데이트 오류:', error);
+            }
+        }
+        
+        // 고장 유형 통계 업데이트
+        async function updateFailureTypeStats(deviceId) {
+            try {
+                const params = deviceId ? `?device_id=${deviceId}&days=7` : '?days=7';
+                const response = await fetch(`/api/realtime/failure-stats${params}`);
+                const data = await response.json();
+                
+                // 도넛 차트 업데이트
+                const labels = Object.keys(data.failure_types);
+                const values = Object.values(data.failure_types);
+                
+                failureTypeChart.data.labels = labels.map(key => getFailureTypeName(key));
+                failureTypeChart.data.datasets[0].data = values;
+                failureTypeChart.update();
+                
+                // 배지 업데이트
+                updateFailureTypeBadges(data.failure_types);
+                
+            } catch (error) {
+                console.error('고장 통계 업데이트 오류:', error);
+            }
+        }
+        
+        // 고장 유형 배지 업데이트
+        function updateFailureTypeBadges(failureTypes) {
+            const container = document.getElementById('failureTypeBadges');
+            container.innerHTML = '';
+            
+            for (const [type, count] of Object.entries(failureTypes)) {
+                const badge = document.createElement('span');
+                badge.className = `failure-type-badge failure-type-${type}`;
+                badge.textContent = `${getFailureTypeName(type)}: ${count}회`;
+                container.appendChild(badge);
+            }
+            
+            if (Object.keys(failureTypes).length === 0) {
+                container.innerHTML = '<p class="text-muted">최근 7일간 고장이 없습니다.</p>';
+            }
+        }
+        
+        // 고장 유형 이름 변환
+        function getFailureTypeName(type) {
+            const names = {
+                'bearing_wear': '⚙️ 베어링 마모',
+                'refrigerant_leak': '💧 냉매 누출',
+                'evaporator_frost': '❄️ 증발기 성에',
+                'burst_sound': '💥 파열음',
+                'unbalance': '⚖️ 언밸런스',
+                'friction': '🔧 마찰음',
+                'general_anomaly': '⚠️ 일반 이상',
+                'normal': '✅ 정상'
+            };
+            return names[type] || type;
+        }
+        
+        // 로그 추가
+        function addLogEntry(data) {
+            const logContainer = document.getElementById('realtimeLog');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            
+            const time = new Date().toLocaleTimeString('ko-KR');
+            const status = data.is_anomaly ? '⚠️' : '✅';
+            const type = getFailureTypeName(data.anomaly_type || 'normal');
+            
+            entry.innerHTML = `
+                <strong>${time}</strong> | 
+                ${status} ${type} | 
+                이상 점수: ${(data.anomaly_score || 0).toFixed(2)} | 
+                데시벨: ${Math.round(data.decibel_level || 0)}dB
+            `;
+            
+            logContainer.insertBefore(entry, logContainer.firstChild);
+            
+            // 최대 50개만 유지
+            while (logContainer.children.length > 50) {
+                logContainer.removeChild(logContainer.lastChild);
+            }
+        }
+        
+        // 디바이스 선택 변경
+        document.getElementById('deviceSelect').addEventListener('change', function() {
+            currentDeviceId = this.value;
+            updateRealtimeData();
+        });
+        
+        // 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            initCharts();
+            updateRealtimeData();
+            
+            // 2초마다 업데이트
+            updateInterval = setInterval(updateRealtimeData, 2000);
+        });
+        
+        // 페이지 언로드 시 정리
+        window.addEventListener('beforeunload', function() {
+            if (updateInterval) {
+                clearInterval(updateInterval);
+            }
+        });
+    </script>
+</body>
+</html>
+

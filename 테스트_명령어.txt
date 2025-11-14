@@ -1,0 +1,10 @@
+프로덕션 서버에서 다음 명령어를 실행하세요:
+
+# 1. 작동하는 엔드포인트 테스트
+curl http://localhost:3000/api/esp32/features/recent | head -20
+
+# 2. 이 명령어로 로그 확인
+pm2 logs signalcraft-nodejs | grep "features/recent"
+
+# 3. 만약 /features/recent도 404가 나오면 라우팅 문제입니다.
+

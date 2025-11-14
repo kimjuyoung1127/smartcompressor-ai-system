@@ -1,0 +1,25 @@
+프로덕션 서버에서 실행:
+
+# 1. 프로세스가 실행 중인 실제 디렉토리로 이동
+cd /var/www/smartcompressor
+
+# 2. 그곳의 코드 확인
+pwd
+git remote -v
+ls -la templates/customer/dashboard.html
+
+# 3. 최신 코드로 업데이트
+git pull origin main
+
+# 4. 서버 재시작
+pm2 restart signalcraft-app
+
+# 또는 프로세스 종료 후 올바른 위치에서 시작
+pm2 delete signalcraft-app
+cd ~/smartcompressor-ai-system
+pm2 start ecosystem.config.js
+
+# 5. 확인
+pm2 status
+pm2 logs signalcraft-app --lines 50
+

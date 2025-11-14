@@ -1,0 +1,46 @@
+
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>{{ subject }}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                        .header { background: #2c3e50; color: white; padding: 20px; text-align: center; }
+                        .content { padding: 20px; background: #f8f9fa; }
+                        .footer { padding: 20px; text-align: center; font-size: 12px; color: #666; }
+                        .alert { background: #d4edda; border: 1px solid #c3e6cb; padding: 15px; border-radius: 5px; margin: 15px 0; }
+                        .warning { background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 15px 0; }
+                        .error { background: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; border-radius: 5px; margin: 15px 0; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <h1>SmartCompressor AI</h1>
+                            <p>무인 아이스크림 매장 관리 시스템</p>
+                        </div>
+                        <div class="content">
+                            <h2>{{ title }}</h2>
+                            <p>{{ message }}</p>
+                            {% if details %}
+                            <div class="alert">
+                                <strong>상세 정보:</strong><br>
+                                {{ details }}
+                            </div>
+                            {% endif %}
+                            {% if action_url %}
+                            <p style="text-align: center; margin: 30px 0;">
+                                <a href="{{ action_url }}" style="background: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px;">확인하기</a>
+                            </p>
+                            {% endif %}
+                        </div>
+                        <div class="footer">
+                            <p>이 이메일은 SmartCompressor AI 시스템에서 자동으로 발송되었습니다.</p>
+                            <p>문의사항이 있으시면 고객지원팀으로 연락해주세요.</p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+                

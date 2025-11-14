@@ -1,0 +1,12 @@
+김주영님 SSH 키 추가 실행 명령어
+=====================================
+
+WSL 터미널을 열고 다음 명령어를 실행하세요:
+
+cd ~/smartcompressor-ai-system
+./quick_add_ssh_key.sh "/mnt/c/Signal_craft/음원라벨링도구/compressor-ai-diagnosis/src/signalcraft-new.pem"
+
+또는 한 줄로:
+
+cd ~/smartcompressor-ai-system && ./quick_add_ssh_key.sh "/mnt/c/Signal_craft/음원라벨링도구/compressor-ai-diagnosis/src/signalcraft-new.pem"
+

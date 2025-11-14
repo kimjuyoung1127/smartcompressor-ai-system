@@ -1,0 +1,48 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{{ report_name }} - {{ week_range }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .header { background: #34495e; color: white; padding: 20px; text-align: center; }
+        .summary { background: #ecf0f1; padding: 20px; margin: 20px 0; }
+        .metric { display: inline-block; margin: 10px; padding: 15px; background: white; border-radius: 5px; }
+        .chart { margin: 20px 0; text-align: center; }
+        .comparison { background: #f8f9fa; padding: 15px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{ report_name }}</h1>
+        <p>기간: {{ week_range }}</p>
+    </div>
+    
+    <div class="summary">
+        <h2>주간 요약</h2>
+        {% for metric in summary_metrics %}
+        <div class="metric">
+            <h3>{{ metric.name }}</h3>
+            <p>{{ metric.value }}</p>
+            <small>{{ metric.change }}</small>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <div class="chart">
+        <h3>주간 매출 비교</h3>
+        <img src="data:image/png;base64,{{ weekly_chart }}" alt="주간 매출 비교">
+    </div>
+    
+    <div class="comparison">
+        <h3>전주 대비 변화</h3>
+        <ul>
+            {% for change in changes %}
+            <li>{{ change }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+</body>
+</html>
+            
