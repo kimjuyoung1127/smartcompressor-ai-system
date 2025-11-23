@@ -45,25 +45,7 @@
 
 ## 🏗️ System Architecture
 
-SignalCraft Web은 안정성과 확장성을 위해 마이크로서비스 지향적 모놀리식 구조를 채택했습니다.
 
-```mermaid
-graph LR
-    Client[Web Browser / Dashboard] -->|HTTP/WebSocket| Nginx[Nginx Proxy]
-    
-    subgraph "Application Server (EC2)"
-        Nginx -->|Auth & IO| Node[Node.js (Express)]
-        Nginx -->|AI Request| Flask[Python (Flask)]
-        
-        Node -->|Session/Data| DB[(PostgreSQL)]
-        Flask -->|Task Queue| Redis[(Redis)]
-        Redis -->|Consume| Worker[Celery Worker]
-        Worker -->|Model Inference| AI[HuBERT/PyOD Models]
-        Worker -->|Save Result| DB
-    end
-````
-
------
 
 ## 🛠️ Tech Stack
 
@@ -167,3 +149,4 @@ signalcraft-web/
 
 
 ```
+
