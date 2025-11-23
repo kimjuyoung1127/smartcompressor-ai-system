@@ -136,7 +136,7 @@ signalcraft-web/
 
 ## 🔗 Related Repositories
 
-  - **[SignalCraft Mobile App](https://github.com/kimjuyoung1127/gongmo)** : 현장 관리자용 모바일 앱 (React Native)
+  - **[SignalCraft Mobile App](https://github.com/kimjuyoung1127/signalcraftapp)** : 현장 관리자용 모바일 앱 (React Native)
 
 -----
 
@@ -149,4 +149,5 @@ signalcraft-web/
 
 
 ```
+
 
