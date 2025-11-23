@@ -12,6 +12,9 @@
 
 ## 📖 Overview
 
+
+https://signalcraft.kr/
+
 **SignalCraft Web**은 산업 현장의 수많은 압축기(Compressor)에서 수집된 소리 데이터를 통합 관리하고 분석하는 **중앙 관제 시스템(Command Center)**입니다.
 단순한 모니터링을 넘어, 전문가가 직접 AI 학습용 데이터를 가공할 수 있는 **고도화된 라벨링 툴**을 내장하고 있으며, Node.js와 Python의 강력한 하이브리드 아키텍처를 기반으로 대규모 데이터를 안정적으로 처리합니다.
 
@@ -149,5 +152,6 @@ signalcraft-web/
 
 
 ```
+
 
 
